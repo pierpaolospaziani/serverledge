@@ -180,6 +180,8 @@ func createSchedulingPolicy() scheduling.Policy {
 		}
 	} else if policyConf == "minR" {
 		return &scheduling.MinRPolicy{}
+	} else if policyConf == "DQN" {
+		return &scheduling.DQNPolicy{}
 	} else {
 		return &scheduling.DefaultLocalPolicy{}
 	}

@@ -21,6 +21,33 @@ import (
 const SCHED_ACTION_OFFLOAD_CLOUD = "O_C"
 const SCHED_ACTION_OFFLOAD_EDGE = "O_E"
 
+/*
+func pickBestEdgeNodeForOffloading(r *scheduledRequest) (url string) {
+	nearbyServersMap := registration.Reg.NearbyServersMap
+	if nearbyServersMap == nil {
+		return ""
+	}
+
+	var availableNodes []string
+
+	// search for warm containers or with available memory
+	for _, v := range nearbyServersMap {
+		if ((v.AvailableWarmContainers[r.Fun.Name] != 0 || v.AvailableMemMB >= r.Request.Fun.MemoryMB) && v.AvailableCPUs >= r.Request.Fun.CPUDemand) {
+			availableNodes = append(availableNodes, v.Addresses.NodeAddress)
+		}
+	}
+
+	if len(availableNodes) == 0 {
+		// log.Println("No nearby nodes with enough resources to handle execution.")
+		return ""
+	}
+
+	// MANCA LA SELEZIONE DEL NODO IN BASE ALLO SPEEDUP
+	...
+
+}
+*/
+
 func pickEdgeNodeForOffloading(r *scheduledRequest) (url string) {
 	nearbyServersMap := registration.Reg.NearbyServersMap
 	if nearbyServersMap == nil {

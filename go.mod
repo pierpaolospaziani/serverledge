@@ -1,4 +1,4 @@
-module github.com/grussorusso/serverledge
+rpmodule github.com/grussorusso/serverledge
 
 go 1.19
 
