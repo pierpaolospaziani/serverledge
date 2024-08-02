@@ -1,9 +1,7 @@
 package scheduling
 
 import (
-	"context"
 	"log"
-	"time"
 
     "github.com/tensorflow/tensorflow/tensorflow/go"
     "github.com/tensorflow/tensorflow/tensorflow/go/saved_model"
@@ -12,8 +10,8 @@ import (
 )
 
 type decisionEngineDQN struct {
-	g *metricGrabberFlux
 }
+
 /*
 type Model struct {
     Session *tensorflow.Session
@@ -144,7 +142,7 @@ func actionFilter(state []float64, r *scheduledRequest) []bool {
 	return actionFilter
 }
 
-func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
+func (d *decisionEngineDQN) Decide(r *scheduledRequest) (int, string, error) {
 
     /*
     STATE:
@@ -183,9 +181,14 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
     	action, err := model.Predict(state, actionFilter)
 	    if err != nil {
 	        log.Println("Error predicting:", err)
-	        return
+	        return nil, nil err
 	    }
     }
+
+    // map simulator action to Serverledge
+    //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
+    //  - Serverledge: DROP(0)-LOCAL(1)-CLOUD(2)-EDGE(3)
+    action = (action + 1) % 4
 
     //log.Println("Action: %d", action)
 
@@ -195,8 +198,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 			dropped:          true,
 		}
 	}
-
-	return action
+	return action, urlEdgeNode, nil
 }
 
 func (d *decisionEngineDQN) InitDecisionEngine() {
@@ -226,10 +228,13 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
 
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
-	//d.g.Completed(r, offloaded)
 	requestChannel <- completedRequest{
 		scheduledRequest: r,
 		location:         offloaded,
 		dropped:          false,
 	}
+}
+
+func (d *decisionEngineFlux) GetGrabber() metricGrabber {
+	// VEDERE COSA DEVO FARCI
 }
