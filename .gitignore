@@ -3,3 +3,4 @@ bin/
 .run/
 __pycache__*
 images/*/executor
+.DS_Store
