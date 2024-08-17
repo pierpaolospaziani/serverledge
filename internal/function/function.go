@@ -146,3 +146,8 @@ func GetAll() ([]string, error) {
 
 	return functions, nil
 }
+
+func (f Function) GetAll() ([]string, error) {
+	functions, err := GetAll()
+	return functions, err
+}

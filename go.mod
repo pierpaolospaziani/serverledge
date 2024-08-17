@@ -5,6 +5,8 @@ go 1.19
 require (
 	github.com/LK4D4/trylock v0.0.0-20191027065348-ff7e133a5c54
 	github.com/docker/docker v20.10.12+incompatible
+	github.com/galeone/tensorflow/tensorflow/go v0.0.0-20221023090153-6b7fa0680c3e
+	github.com/galeone/tfgo v0.0.0-20230715013254-16113111dc99
 	github.com/golang/protobuf v1.5.3
 	github.com/hexablock/vivaldi v0.0.0-20180727225019-07adad3f2b5f
 	github.com/influxdata/influxdb-client-go/v2 v2.12.0

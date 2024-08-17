@@ -389,11 +389,11 @@ func WarmStatus() map[string]int {
 }
 
 // FreeableMemory returns the amount of memory that can be freed from warm containers
-func FreeableMemory(fun *function.Function) int {
+func FreeableMemory(fun *function.Function) int64 {
 	Resources.RLock()
 	defer Resources.RUnlock()
-	freeableMemory = 0
-	fp, ok := Resources.ContainerPools[f.Name]
+	freeableMemory := int64(0)
+	fp, ok := Resources.ContainerPools[fun.Name]
 	if !ok {
 		return 0
 	}
@@ -404,5 +404,5 @@ func FreeableMemory(fun *function.Function) int {
 			freeableMemory += memory
 		}
 	}
-	return warmPool
+	return freeableMemory
 }

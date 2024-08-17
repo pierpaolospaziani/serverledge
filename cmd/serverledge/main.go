@@ -158,7 +158,7 @@ func main() {
 }
 
 func createSchedulingPolicy() scheduling.Policy {
-	policyConf := config.GetString(config.SCHEDULING_POLICY, "default")
+	policyConf := config.GetString(config.SCHEDULING_POLICY, "DQN")
 	log.Printf("Configured policy: %s\n", policyConf)
 	if policyConf == "cloudonly" {
 		return &scheduling.CloudOnlyPolicy{}
