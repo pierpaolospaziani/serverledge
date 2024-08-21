@@ -2,6 +2,7 @@ package scheduling
 
 import (
 	"log"
+	"sort"
 
     // tg "github.com/galeone/tfgo"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
@@ -102,6 +103,7 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
         }
     }
     return action, nil
+    // return 3, nil
 }
 
 func oneHotEncoding(list []string, str string) []float32 {
@@ -133,6 +135,7 @@ func getState(r *scheduledRequest) State {
 		log.Printf(message)
 		panic(err)
 	}
+	sort.Strings(functions)	// need to sort cause Go mixes maps and NN needs functionId in order
 	functionId := oneHotEncoding(functions, r.Fun.Name)
 	// log.Printf("functionId = %v -> %v", functions, functionId)
 
@@ -140,6 +143,7 @@ func getState(r *scheduledRequest) State {
     for key := range Classes {
         classList = append(classList, key)
     }
+	sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
 	classId := oneHotEncoding(classList, r.ClassService.Name)
 	// log.Printf("classId = %v -> %v", classList, classId)
 
@@ -232,7 +236,7 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
 }
 
 // VEDERE SE SERVE, IL MODELLO VA CHIUSO SOLO QUANDO SPEGNI TUTTO, MA DOVE?
-func (d *decisionEngineDQN) CloseSessio() {
+func (d *decisionEngineDQN) CloseSession() {
 	dqnModel.Session.Close()
 }
 
