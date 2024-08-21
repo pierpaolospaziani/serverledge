@@ -1,7 +1,9 @@
 package scheduling
 
 import (
+	"context"
 	"log"
+	"time"
 	"sort"
 
     // tg "github.com/galeone/tfgo"
@@ -10,7 +12,9 @@ import (
 	"github.com/grussorusso/serverledge/internal/node"
 )
 
-type decisionEngineDQN struct {}
+type decisionEngineDQN struct {
+	g *metricGrabberFlux
+}
 
 
 type Model struct {
@@ -233,6 +237,9 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
         log.Println("Error loading model")
         return
     }
+	startTime = time.Now()
+
+	d.g.InitMetricGrabber()
 }
 
 // VEDERE SE SERVE, IL MODELLO VA CHIUSO SOLO QUANDO SPEGNI TUTTO, MA DOVE?
@@ -240,13 +247,21 @@ func (d *decisionEngineDQN) CloseSession() {
 	dqnModel.Session.Close()
 }
 
+func (d *decisionEngineDQN) deleteOldData(period time.Duration) {
+	err := deleteAPI.Delete(context.Background(), &orgServerledge, bucketServerledge, time.Now().Add(-2*period), time.Now().Add(-period), "")
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
-	requestChannel <- completedRequest{
-		scheduledRequest: r,
-		location:         offloaded,
-		dropped:          false,
-	}
+	d.g.Completed(r, offloaded)
+	// requestChannel <- completedRequest{
+	// 	scheduledRequest: r,
+	// 	location:         offloaded,
+	// 	dropped:          false,
+	// }
 }
 
 func (d *decisionEngineDQN) GetGrabber() metricGrabber {

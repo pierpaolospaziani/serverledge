@@ -1,0 +1,4 @@
+api.port: 1323
+etcd.address: 192.168.122.31:2379
+metrics.enabled: false
+container.pool.memory: 2560
