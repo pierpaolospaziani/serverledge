@@ -129,7 +129,7 @@ func updateClassStats(slice []int, dropped bool, schedAction string) {
 
 
 // WriteJSON writes a JSON object to InfluxDB
-func (mg *metricGrabberDQN) WriteJSON(stats DQNStats) {
+func (mg *metricGrabberDQN) WriteJSON() {
 	// Convert DQNStats to JSON string
 	jsonData, err := json.Marshal(stats)
 	if err != nil {

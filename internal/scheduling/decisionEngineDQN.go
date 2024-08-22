@@ -254,7 +254,7 @@ func (d *decisionEngineDQN) CloseSession() {
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
 	d.mg.addStats(r,false)
-    d.mg.WriteJSON(r)
+    d.mg.WriteJSON()
 	requestChannel <- completedRequest{
 		scheduledRequest: r,
 		location:         offloaded,
