@@ -15,14 +15,16 @@ import (
 const INFLUXDB = "[INFLUXDB]:"
 
 type DQNStats struct {
-	Exec		[]float64
-	Cloud		[]float64
-	Edge		[]float64
-	Drop		[]float64
+	Exec		[]float64	// list of seconds in which exec append
+	Cloud		[]float64	// list of seconds in which offload cloud append
+	Edge		[]float64	// list of seconds in which offload edge append
+	Drop		[]float64	// list of seconds in which drop append
 
-	Reward 		[]float64
-	Cost 		[]float64
+	Reward 		[]float64	// list of rewards obtained
+	Cost 		[]float64	// list of costs
 
+	// counts how many times an action has been taken for that class
+	// LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
 	Standard 	[]int
 	Critical1 	[]int
 	Critical2 	[]int
@@ -32,6 +34,9 @@ type DQNStats struct {
 var stats DQNStats
 
 var initTime time.Time
+
+var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 3600)
+var updateRound = 0
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
 type metricGrabberDQN struct {
@@ -77,8 +82,9 @@ func InitMG() *metricGrabberDQN {
 
 func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 	elapsedTime := r.Arrival.Sub(initTime)
+	elapsedTimeInSeconds := float64(elapsedTime.Seconds())
 	if dropped {
-		stats.Drop = append(stats.Drop, float64(elapsedTime.Seconds()))
+		stats.Drop = append(stats.Drop, elapsedTimeInSeconds)
 	} else {
 		switch r.ExecReport.SchedAction {
 		case "O_C":
@@ -108,6 +114,12 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
     default:
         updateClassStats(&stats.Standard, dropped, r.ExecReport.SchedAction)
     }
+
+    // add stats to InfluxDB every 'updateEvery'
+    if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
+    	mg.WriteJSON()
+    	updateRound++
+    }
 }
 
 
@@ -127,7 +139,7 @@ func updateClassStats(slice *[]int, dropped bool, schedAction string) {
 }
 
 
-// WriteJSON writes a JSON object to InfluxDB
+// Writes stats as a JSON object to InfluxDB
 func (mg *metricGrabberDQN) WriteJSON() {
 	// Convert DQNStats to JSON string
 	jsonData, err := json.Marshal(stats)
@@ -151,7 +163,7 @@ func (mg *metricGrabberDQN) WriteJSON() {
 }
 
 
-// Close closes the InfluxDB client connection
+// Closes the InfluxDB client connection
 func (mg *metricGrabberDQN) Close() {
 	mg.client.Close()
 }

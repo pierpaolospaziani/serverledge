@@ -87,4 +87,6 @@ const STORAGE_DB_TOKEN = "storage.token"
 const STORAGE_DB_BUCKET = "storage.bucket"
 const STORAGE_DB_ORGNAME = "storage.orgname"
 
+const DQN_STORE_STATS_EVERY = "dqn.store.stats.every"
+
 const DOCKER_LIMIT_CPU = "docker.cpu"
