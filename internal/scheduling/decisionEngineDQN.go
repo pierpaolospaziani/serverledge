@@ -14,7 +14,6 @@ type decisionEngineDQN struct {
 	mg *metricGrabberDQN
 }
 
-
 type Model struct {
     Session *tf.Session
     Graph   *tf.Graph
@@ -42,6 +41,7 @@ func LoadModel(modelPath string) *Model {
     }
     return nil
 }
+
 
 func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
     state := []float32{
@@ -96,17 +96,18 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
     }
 
     // return the index of highest value
-    // action := 0
-    // maxValue := float32(-1)
-    // for i, value := range prediction {
-    //     if value > maxValue {
-    //         action = i
-    //         maxValue = value
-    //     }
-    // }
-    // return action, nil
-    return 3, nil
+    action := 0
+    maxValue := float32(-1)
+    for i, value := range prediction {
+        if value > maxValue {
+            action = i
+            maxValue = value
+        }
+    }
+    return action, nil
+    // return 3, nil
 }
+
 
 func oneHotEncoding(list []string, str string) []float32 {
 	indexMap := make(map[string]int)
@@ -119,6 +120,7 @@ func oneHotEncoding(list []string, str string) []float32 {
 	}
 	return oneHot
 }
+
 
 func getState(r *scheduledRequest) State {
 	percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
@@ -163,6 +165,7 @@ func getState(r *scheduledRequest) State {
 	return state
 }
 
+
 func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
 	// availableMemory := node.Resources.MaxMemMB * state[0]
@@ -176,6 +179,7 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 	}
 	return actionFilter
 }
+
 
 func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
@@ -213,16 +217,13 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	log.Println("Action =", action)
 
-    // var stats DQNStats
-    // stats.Policy = "ciao"
-    // d.mg.WriteJSON(stats)
-
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
     //  - Serverledge: DROP(0)-LOCAL(1)-CLOUD(2)-EDGE(3)
     action = (action + 1) % 4
 
 	if action == DROP_REQUEST {
+		d.mg.addStats(r,true)
 		requestChannel <- completedRequest{
 			scheduledRequest: r,
 			dropped:          true,
@@ -230,6 +231,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	}
 	return action
 }
+
 
 func (d *decisionEngineDQN) InitDecisionEngine() {
 	// model initialization
@@ -242,20 +244,24 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
     d.mg = InitMG()
 }
 
+
 // VEDERE SE SERVE, IL MODELLO VA CHIUSO SOLO QUANDO SPEGNI TUTTO, MA DOVE?
 func (d *decisionEngineDQN) CloseSession() {
 	dqnModel.Session.Close()
 }
 
+
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
-	log.Println(r.ExecReport)
+	d.mg.addStats(r,false)
+    d.mg.WriteJSON(r)
 	requestChannel <- completedRequest{
 		scheduledRequest: r,
 		location:         offloaded,
 		dropped:          false,
 	}
 }
+
 
 func (d *decisionEngineDQN) GetGrabber() metricGrabber {
 	// VEDERE COSA DEVO FARCI
