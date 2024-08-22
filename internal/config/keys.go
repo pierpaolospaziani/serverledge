@@ -84,6 +84,7 @@ const STORAGE_VERSION = "storage.version"
 
 const STORAGE_DB_ADDRESS = "storage.address"
 const STORAGE_DB_TOKEN = "storage.token"
+const STORAGE_DB_BUCKET = "storage.bucket"
 const STORAGE_DB_ORGNAME = "storage.orgname"
 
 const DOCKER_LIMIT_CPU = "docker.cpu"

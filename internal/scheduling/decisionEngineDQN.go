@@ -96,16 +96,16 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
     }
 
     // return the index of highest value
-    action := 0
-    maxValue := float32(-1)
-    for i, value := range prediction {
-        if value > maxValue {
-            action = i
-            maxValue = value
-        }
-    }
-    return action, nil
-    // return 3, nil
+    // action := 0
+    // maxValue := float32(-1)
+    // for i, value := range prediction {
+    //     if value > maxValue {
+    //         action = i
+    //         maxValue = value
+    //     }
+    // }
+    // return action, nil
+    return 3, nil
 }
 
 func oneHotEncoding(list []string, str string) []float32 {
@@ -213,9 +213,9 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	log.Println("Action =", action)
 
-    var stats DQNStats
-    stats.Policy = "ciao"
-    d.mg.WriteJSON(stats)
+    // var stats DQNStats
+    // stats.Policy = "ciao"
+    // d.mg.WriteJSON(stats)
 
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
@@ -239,7 +239,7 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
         log.Println("Error loading model")
         return
     }
-    d.mg = InitMetricGrabber()
+    d.mg = InitMG()
 }
 
 // VEDERE SE SERVE, IL MODELLO VA CHIUSO SOLO QUANDO SPEGNI TUTTO, MA DOVE?
@@ -249,6 +249,7 @@ func (d *decisionEngineDQN) CloseSession() {
 
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
+	log.Println(r.ExecReport)
 	requestChannel <- completedRequest{
 		scheduledRequest: r,
 		location:         offloaded,

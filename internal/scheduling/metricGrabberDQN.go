@@ -15,7 +15,19 @@ import (
 const INFLUXDB = "[INFLUXDB]:"
 
 type DQNStats struct {
-	Policy         string
+	exec		[]int
+	cloud		[]int
+	edge		[]int
+	drop		[]int
+
+	reward 		[]int
+	reward_cost []int
+	cost 		[]int
+
+	standard 	[]int
+	critical_1 	[]int
+	critical_2 	[]int
+	batch 		[]int
 }
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
@@ -26,12 +38,12 @@ type metricGrabberDQN struct {
 	writeAPI api.WriteAPIBlocking
 }
 
-// InitMetricGrabber initializes and returns a new metricGrabberDQN instance
-func InitMetricGrabber() *metricGrabberDQN {
+// Initializes and returns a new metricGrabberDQN instance
+func InitMG() *metricGrabberDQN {
 	org := config.GetString(config.STORAGE_DB_ORGNAME, "serverledge")
 	url := config.GetString(config.STORAGE_DB_ADDRESS, "http://localhost:8086")
 	token := config.GetString(config.STORAGE_DB_TOKEN, "serverledge")
-	bucket := config.GetString(config.STORAGE_DB_TOKEN, "dqn")
+	bucket := config.GetString(config.STORAGE_DB_BUCKET, "dqn")
 
 	client := influxdb2.NewClient(url, token)
 	writeAPI := client.WriteAPIBlocking(org, bucket)

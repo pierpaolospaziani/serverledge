@@ -4,4 +4,5 @@ metrics.enabled: false
 container.pool.memory: 2560
 storage.address: "http://192.168.122.31:8086"
 storage.token: "serverledge"
+storage.bucket: "dqn"
 storage.orgname: "serverledge"
