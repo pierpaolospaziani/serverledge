@@ -15,18 +15,18 @@ import (
 const INFLUXDB = "[INFLUXDB]:"
 
 type DQNStats struct {
-	exec		[]float64
-	cloud		[]float64
-	edge		[]float64
-	drop		[]float64
+	Exec		[]float64
+	Cloud		[]float64
+	Edge		[]float64
+	Drop		[]float64
 
-	reward 		[]float64
-	cost 		[]float64
+	Reward 		[]float64
+	Cost 		[]float64
 
-	standard 	[]int
-	critical1 	[]int
-	critical2 	[]int
-	batch 		[]int
+	Standard 	[]int
+	Critical1 	[]int
+	Critical2 	[]int
+	Batch 		[]int
 }
 
 var stats DQNStats
@@ -45,16 +45,16 @@ type metricGrabberDQN struct {
 // Initializes and returns a new metricGrabberDQN instance
 func InitMG() *metricGrabberDQN {
 	stats = DQNStats{
-	    exec:      []float64{},
-	    cloud:     []float64{},
-	    edge:      []float64{},
-	    drop:      []float64{},
-	    reward:    []float64{},
-	    cost:      []float64{},
-	    standard:  []int{0,0,0,0},
-	    critical1: []int{0,0,0,0},
-	    critical2: []int{0,0,0,0},
-	    batch:     []int{0,0,0,0},
+	    Exec:      []float64{},
+	    Cloud:     []float64{},
+	    Edge:      []float64{},
+	    Drop:      []float64{},
+	    Reward:    []float64{},
+	    Cost:      []float64{},
+	    Standard:  []int{0,0,0,0},
+	    Critical1: []int{0,0,0,0},
+	    Critical2: []int{0,0,0,0},
+	    Batch:     []int{0,0,0,0},
 	}
 
 	initTime = time.Now()
@@ -76,43 +76,42 @@ func InitMG() *metricGrabberDQN {
 
 
 func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
-	time := r.Arrival.Sub(initTime)
-	log.Println("DECISION:",r.ExecReport.SchedAction, "DROPPED:", dropped)
+	elapsedTime := r.Arrival.Sub(initTime)
 	if dropped {
-		stats.drop = append(stats.drop, float64(time.Seconds()))
+		stats.Drop = append(stats.Drop, float64(elapsedTime.Seconds()))
 	} else {
 		switch r.ExecReport.SchedAction {
 		case "O_C":
-		    stats.cloud = append(stats.cloud, float64(time.Seconds()))
+		    stats.Cloud = append(stats.Cloud, float64(elapsedTime.Seconds()))
 		case "O_E":
-		    stats.edge = append(stats.edge, float64(time.Seconds()))
+		    stats.Edge = append(stats.Edge, float64(elapsedTime.Seconds()))
 		default:
-		    stats.exec = append(stats.exec, float64(time.Seconds()))
+		    stats.Exec = append(stats.Exec, float64(elapsedTime.Seconds()))
 		}
 	}
 
 	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
-		stats.reward = append(stats.reward, r.ClassService.Utility)
+		stats.Reward = append(stats.Reward, r.ClassService.Utility)
 	} else{
-		stats.reward = append(stats.reward, 0)
+		stats.Reward = append(stats.Reward, 0)
 	}
 
-	stats.cost = append(stats.cost, r.ExecReport.Cost)
+	stats.Cost = append(stats.Cost, r.ExecReport.Cost)
 
 	switch r.ClassService.Name {
     case "batch":
-        updateClassStats(stats.batch, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Batch, dropped, r.ExecReport.SchedAction)
     case "critical1":
-        updateClassStats(stats.critical1, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Critical1, dropped, r.ExecReport.SchedAction)
     case "critical2":
-        updateClassStats(stats.critical2, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Critical2, dropped, r.ExecReport.SchedAction)
     default:
-        updateClassStats(stats.standard, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Standard, dropped, r.ExecReport.SchedAction)
     }
 }
 
 
-func updateClassStats(slice []int, dropped bool, schedAction string) {
+func updateClassStats(slice *[]int, dropped bool, schedAction string) {
     index := 3
     if !dropped {
         switch schedAction {
@@ -124,7 +123,7 @@ func updateClassStats(slice []int, dropped bool, schedAction string) {
             index = 0
         }
     }
-    slice[index]++
+    (*slice)[index]++
 }
 
 
