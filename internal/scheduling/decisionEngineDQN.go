@@ -170,9 +170,13 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
 	// availableMemory := node.Resources.MaxMemMB * state[0]
 	canExecuteLocally := canExecute(r.Fun)
+	canExecuteOnCloud := state.HasBeenOffloaded == 0.0
 	canExecuteOnEdge := state.CanExecuteOnEdge == 1.0 && state.HasBeenOffloaded == 0.0
 	if !canExecuteLocally {
 		actionFilter[0] = false
+	}
+	if !canExecuteOnCloud {
+		actionFilter[1] = false
 	}
 	if !canExecuteOnEdge {
 		actionFilter[2] = false
