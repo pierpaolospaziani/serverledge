@@ -4,18 +4,15 @@ import threading
 import time
 import os
 
-IP = "192.168.122.21"
-PORT = 1324
+IP = "192.168.122.31"
+PORT = 1323
 
-# Impostare il seed per generare la stessa sequenza ogni volta
 seed_value = 12345
 np.random.seed(seed_value)
 random.seed(seed_value)
 
-# Definizione mappa function_to_list
 func_to_list = {"f1":[], "f2":[], "f3":[], "f4":[], "f5":[]}
 
-# Definizione delle classi
 classes = [
     {"name": "standard", "arrival_weight": 0.7},
     {"name": "critical-1", "arrival_weight": 0.1},
@@ -23,16 +20,14 @@ classes = [
     {"name": "batch", "arrival_weight": 0.1}
 ]
 
-# Definizione delle funzioni e dei tassi di arrivo
 functions = [
-    {"name": "f1", "rate": 35, "duration_mean": 0.4},
-    {"name": "f2", "rate": 43, "duration_mean": 0.2},
-    {"name": "f3", "rate": 69, "duration_mean": 0.3},
-    {"name": "f4", "rate": 33, "duration_mean": 0.25},
-    {"name": "f5", "rate": 41, "duration_mean": 0.45}
+    {"name": "f1", "rate": 0.8, "duration_mean": 0.4},
+    {"name": "f2", "rate": 1.6, "duration_mean": 0.2},
+    {"name": "f3", "rate": 4.2, "duration_mean": 0.3},
+    {"name": "f4", "rate": 0.6, "duration_mean": 0.25},
+    {"name": "f5", "rate": 1.4, "duration_mean": 0.45}
 ]
 
-# Calcolo della distribuzione cumulativa per la selezione ponderata delle classi
 weights = [cls['arrival_weight'] for cls in classes]
 cumulative_weights = np.cumsum(weights)
 
@@ -44,7 +39,7 @@ def select_class():
     for i, weight in enumerate(cumulative_weights):
         if rand_value <= weight:
             return classes[i]['name']
-    return classes[-1]['name']  # Default to last class if nothing matched
+
 
 class ArrivalGenerator(threading.Thread):
     def __init__(self, function, duration):
@@ -56,20 +51,23 @@ class ArrivalGenerator(threading.Thread):
         arrivals = generate_poisson_arrivals(self.function['rate'], self.duration)
         for arrival_time in arrivals:
             class_name = select_class()
-            #print(f"Function: {self.function['name']}, Arrival Time: {arrival_time:.4f}, Class: {class_name}")
+        
             func_to_list[self.function['name']].append((arrival_time, self.function['name'], self.function['duration_mean'], class_name))
 
-# Durata per la simulazione (ad esempio 10 secondi)
-duration = 0.1
 
-# Creazione e avvio dei thread per ogni funzione
+def invoke_function(function_name, duration_mean, class_name):
+    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{duration_mean}\""
+    os.system(command)
+
+
+duration = 3600
+
 threads = []
 for func in functions:
     thread = ArrivalGenerator(func, duration)
     threads.append(thread)
     thread.start()
 
-# Attendere la conclusione di tutti i thread
 for thread in threads:
     thread.join()
 
@@ -77,28 +75,12 @@ complete_list = []
 for key in func_to_list.keys():
     for t in func_to_list[key]:
         complete_list.append(t)
-
-# Ordinamento della lista in-place
 complete_list.sort(key=lambda x: x[0])
 
-# Funzione che verrà eseguita dal thread per stampare il nome della funzione
-def invoke_function(function_name, duration_mean, class_name):
-    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{duration_mean}\""
-    print(command)
-    # Esegui il comando
-    os.system(command)
-
-# Assumendo che il primo evento si verifichi a tempo 0
-start_time = 0.0
-
-# Iterare sulla lista degli arrivi
 for i, (arrival_time, function_name, duration_mean, class_name) in enumerate(complete_list):
     if i == 0:
-        delay = arrival_time - start_time
+        delay = arrival_time
     else:
         delay = arrival_time - complete_list[i-1][0]
-    
     time.sleep(delay)
-
-    # Creare e avviare un thread per stampare il nome della funzione
     threading.Thread(target=invoke_function, args=(function_name, duration_mean, class_name)).start()
