@@ -12,8 +12,8 @@ var Classes = make(map[string]function.QoSClass)
 
 var DefaultClass = function.QoSClass{
 	Name:                "default",
-	Utility:             1,
-	MaximumResponseTime: -1,
+	Utility:             0.01,
+	MaximumResponseTime: 0.5,
 	CompletedPercentage: 0,
 }
 
