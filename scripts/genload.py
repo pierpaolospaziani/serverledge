@@ -21,11 +21,11 @@ classes = [
 ]
 
 functions = [
-    {"name": "f1", "rate": 0.8, "duration_mean": 0.4},
-    {"name": "f2", "rate": 1.6, "duration_mean": 0.2},
-    {"name": "f3", "rate": 4.2, "duration_mean": 0.3},
-    {"name": "f4", "rate": 0.6, "duration_mean": 0.25},
-    {"name": "f5", "rate": 1.4, "duration_mean": 0.45}
+    {"name": "f1", "rate": 0.8, "param": 8100},
+    {"name": "f2", "rate": 1.6, "param": 6000},
+    {"name": "f3", "rate": 4.2, "param": 7200},
+    {"name": "f4", "rate": 0.6, "param": 6550},
+    {"name": "f5", "rate": 1.4, "param": 8500}
 ]
 
 weights = [cls['arrival_weight'] for cls in classes]
@@ -52,11 +52,11 @@ class ArrivalGenerator(threading.Thread):
         for arrival_time in arrivals:
             class_name = select_class()
         
-            func_to_list[self.function['name']].append((arrival_time, self.function['name'], self.function['duration_mean'], class_name))
+            func_to_list[self.function['name']].append((arrival_time, self.function['name'], self.function['param'], class_name))
 
 
-def invoke_function(function_name, duration_mean, class_name):
-    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{duration_mean}\""
+def invoke_function(function_name, param, class_name):
+    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{param}\""
     os.system(command)
 
 
@@ -77,10 +77,10 @@ for key in func_to_list.keys():
         complete_list.append(t)
 complete_list.sort(key=lambda x: x[0])
 
-for i, (arrival_time, function_name, duration_mean, class_name) in enumerate(complete_list):
+for i, (arrival_time, function_name, param, class_name) in enumerate(complete_list):
     if i == 0:
         delay = arrival_time
     else:
         delay = arrival_time - complete_list[i-1][0]
     time.sleep(delay)
-    threading.Thread(target=invoke_function, args=(function_name, duration_mean, class_name)).start()
+    threading.Thread(target=invoke_function, args=(function_name, param, class_name)).start()
