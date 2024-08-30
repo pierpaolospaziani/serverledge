@@ -221,7 +221,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	log.Println("Action =", action)
 
-	log.Println("len(requestChannel)", len(requestChannel))
+	// log.Println("len(requestChannel)", len(requestChannel))
 
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
@@ -230,10 +230,10 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	if action == DROP_REQUEST {
 		d.mg.addStats(r,true)
-		requestChannel <- completedRequest{
-			scheduledRequest: r,
-			dropped:          true,
-		}
+		// requestChannel <- completedRequest{
+		// 	scheduledRequest: r,
+		// 	dropped:          true,
+		// }
 	}
 	return action
 }
@@ -261,11 +261,11 @@ func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
 	d.mg.addStats(r,false)
     // d.mg.WriteJSON()
-	requestChannel <- completedRequest{
-		scheduledRequest: r,
-		location:         offloaded,
-		dropped:          false,
-	}
+	// requestChannel <- completedRequest{
+	// 	scheduledRequest: r,
+	// 	location:         offloaded,
+	// 	dropped:          false,
+	// }
 }
 
 
