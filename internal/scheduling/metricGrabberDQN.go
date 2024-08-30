@@ -127,9 +127,9 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 	switch r.ClassService.Name {
     case "batch":
         updateClassStats(&stats.Batch, dropped, r.ExecReport.SchedAction)
-    case "critical1":
+    case "critical-1":
         updateClassStats(&stats.Critical1, dropped, r.ExecReport.SchedAction)
-    case "critical2":
+    case "critical-2":
         updateClassStats(&stats.Critical2, dropped, r.ExecReport.SchedAction)
     default:
         updateClassStats(&stats.Standard, dropped, r.ExecReport.SchedAction)
