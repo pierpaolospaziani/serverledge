@@ -7,4 +7,4 @@ storage.address: "http://192.168.122.31:8086"
 storage.token: "serverledge"
 storage.bucket: "dqn"
 storage.orgname: "serverledge"
-dqn.store.stats.every: 3600
+dqn.store.stats.every: 1800

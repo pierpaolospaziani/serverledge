@@ -42,7 +42,7 @@ var stats DQNStats
 
 var initTime time.Time
 
-var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 3600)
+var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 1800)
 var updateRound = 0
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
@@ -54,8 +54,7 @@ type metricGrabberDQN struct {
 }
 
 
-// Initializes and returns a new metricGrabberDQN instance
-func InitMG() *metricGrabberDQN {
+func EmptyStats() DQNStats{
 	stats = DQNStats{
 	    Exec:      			 []float64{},
 	    Cloud:     			 []float64{},
@@ -74,6 +73,13 @@ func InitMG() *metricGrabberDQN {
 		OffloadLatencyCloud: []float64{},
 		OffloadLatencyEdge:  []float64{},
 	}
+	return stats
+}
+
+
+// Initializes and returns a new metricGrabberDQN instance
+func InitMG() *metricGrabberDQN {
+	stats = EmptyStats()
 
 	initTime = time.Now()
 
@@ -143,6 +149,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
     	mg.WriteJSON()
+		stats = EmptyStats()
     	updateRound++
     }
 }
