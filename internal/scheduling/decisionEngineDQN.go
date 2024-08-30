@@ -221,6 +221,8 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	log.Println("Action =", action)
 
+	log.Println("len(requestChannel)", len(requestChannel))
+
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
     //  - Serverledge: DROP(0)-LOCAL(1)-CLOUD(2)-EDGE(3)
