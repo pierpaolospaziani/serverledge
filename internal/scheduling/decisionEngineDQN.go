@@ -187,10 +187,6 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 
 func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
-	// class := r.ClassService
-
-	// arrivalChannel <- arrivalRequest{r, class.Name}
-
 	/*
 		CONTROLLARE SE E' CORRETTO FreeableMemory
 	*/
@@ -221,8 +217,6 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	log.Println("Action =", action)
 
-	// log.Println("len(requestChannel)", len(requestChannel))
-
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
     //  - Serverledge: DROP(0)-LOCAL(1)-CLOUD(2)-EDGE(3)
@@ -230,10 +224,6 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	if action == DROP_REQUEST {
 		d.mg.addStats(r,true)
-		// requestChannel <- completedRequest{
-		// 	scheduledRequest: r,
-		// 	dropped:          true,
-		// }
 	}
 	return action
 }
@@ -258,14 +248,8 @@ func (d *decisionEngineDQN) CloseSession() {
 
 
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
-	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineDQN")
+	// log.Println("COMPLETED: in decisionEngineDQN")
 	d.mg.addStats(r,false)
-    // d.mg.WriteJSON()
-	// requestChannel <- completedRequest{
-	// 	scheduledRequest: r,
-	// 	location:         offloaded,
-	// 	dropped:          false,
-	// }
 }
 
 

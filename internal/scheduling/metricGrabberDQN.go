@@ -15,13 +15,13 @@ import (
 const INFLUXDB = "[INFLUXDB]:"
 
 type DQNStats struct {
-	Exec		[]float64	// list of seconds in which exec append
-	Cloud		[]float64	// list of seconds in which offload cloud append
-	Edge		[]float64	// list of seconds in which offload edge append
-	Drop		[]float64	// list of seconds in which drop append
+	Exec	[]float64	// list of seconds in which exec append
+	Cloud	[]float64	// list of seconds in which offload cloud append
+	Edge	[]float64	// list of seconds in which offload edge append
+	Drop	[]float64	// list of seconds in which drop append
 
-	Reward 		[]float64	// list of rewards obtained
-	Cost 		[]float64	// list of costs
+	Reward 	[]float64	// list of rewards obtained
+	Cost 	[]float64	// list of costs
 
 	// counts how many times an action has been taken for that class
 	// LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
@@ -29,6 +29,13 @@ type DQNStats struct {
 	Critical1 	[]int
 	Critical2 	[]int
 	Batch 		[]int
+
+	ResponseTime 		[]float64
+	IsWarmStart  		[]bool
+	InitTime 	 		[]float64
+	Duration 	 		[]float64
+	OffloadLatencyCloud []float64
+	OffloadLatencyEdge 	[]float64
 }
 
 var stats DQNStats
@@ -50,16 +57,22 @@ type metricGrabberDQN struct {
 // Initializes and returns a new metricGrabberDQN instance
 func InitMG() *metricGrabberDQN {
 	stats = DQNStats{
-	    Exec:      []float64{},
-	    Cloud:     []float64{},
-	    Edge:      []float64{},
-	    Drop:      []float64{},
-	    Reward:    []float64{},
-	    Cost:      []float64{},
-	    Standard:  []int{0,0,0,0},
-	    Critical1: []int{0,0,0,0},
-	    Critical2: []int{0,0,0,0},
-	    Batch:     []int{0,0,0,0},
+	    Exec:      			 []float64{},
+	    Cloud:     			 []float64{},
+	    Edge:      			 []float64{},
+	    Drop:      			 []float64{},
+	    Reward:    			 []float64{},
+	    Cost:      			 []float64{},
+	    Standard:  			 []int{0,0,0,0},
+	    Critical1: 			 []int{0,0,0,0},
+	    Critical2: 			 []int{0,0,0,0},
+	    Batch:     			 []int{0,0,0,0},
+	    ResponseTime: 		 []float64{},
+		IsWarmStart:		 []bool{},
+		InitTime: 			 []float64{},
+		Duration: 			 []float64{},
+		OffloadLatencyCloud: []float64{},
+		OffloadLatencyEdge:  []float64{},
 	}
 
 	initTime = time.Now()
@@ -98,7 +111,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
 	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
-	} else{
+	} else {
 		stats.Reward = append(stats.Reward, 0)
 	}
 
@@ -113,6 +126,18 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
         updateClassStats(&stats.Critical2, dropped, r.ExecReport.SchedAction)
     default:
         updateClassStats(&stats.Standard, dropped, r.ExecReport.SchedAction)
+    }
+
+    if !dropped {
+    	stats.ResponseTime = append(stats.ResponseTime, r.ExecReport.ResponseTime)
+    	stats.IsWarmStart = append(stats.IsWarmStart, r.ExecReport.IsWarmStart)
+    	stats.InitTime = append(stats.InitTime, r.ExecReport.InitTime)
+    	stats.Duration = append(stats.Duration, r.ExecReport.Duration)
+		if r.ExecReport.SchedAction == "O_C"{
+    		stats.OffloadLatencyCloud = append(stats.OffloadLatencyCloud, r.ExecReport.OffloadLatencyCloud)
+		} else if r.ExecReport.SchedAction == "O_E"{
+	    	stats.OffloadLatencyEdge = append(stats.OffloadLatencyEdge, r.ExecReport.OffloadLatencyEdge)
+		}
     }
 
     // add stats to InfluxDB every 'updateEvery'
