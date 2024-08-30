@@ -189,7 +189,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 	class := r.ClassService
 
-	arrivalChannel <- arrivalRequest{r, class.Name}
+	// arrivalChannel <- arrivalRequest{r, class.Name}
 
 	/*
 		CONTROLLARE SE E' CORRETTO FreeableMemory
