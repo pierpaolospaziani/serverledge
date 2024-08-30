@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"strconv"
 
 	"github.com/grussorusso/serverledge/internal/config"
 
@@ -173,24 +174,32 @@ func updateClassStats(slice *[]int, dropped bool, schedAction string) {
 
 // Writes stats as a JSON object to InfluxDB
 func (mg *metricGrabberDQN) WriteJSON() {
-	// Convert DQNStats to JSON string
-	jsonData, err := json.Marshal(stats)
-	if err != nil {
-		log.Fatalf("%s Error marshalling JSON: %v\n", INFLUXDB, err)
-	}
+	parts := []interface{}{
+        stats.Exec, stats.Cloud, stats.Edge, stats.Drop,
+        stats.Reward, stats.Cost, stats.Standard, stats.Critical1,
+        stats.Critical2, stats.Batch, stats.ResponseTime, stats.IsWarmStart,
+        stats.InitTime, stats.Duration, stats.OffloadLatencyCloud, stats.OffloadLatencyEdge,
+    }
 
-	// Create a new data point
-	point := influxdb2.NewPointWithMeasurement("dqn_stats").
-		AddTag("new_data", "new_data").
-		AddField("json_data", string(jsonData)).
-		SetTime(time.Now().UTC())
+    for i, part := range parts {
+		// Convert DQNStats to JSON string
+		jsonData, err := json.Marshal(part)
+        if err != nil {
+            log.Fatalf("%s Error marshalling JSON part %d: %v\n", INFLUXDB, i, err)
+        }
 
-	// Write the point to InfluxDB
-	err = mg.writeAPI.WritePoint(context.Background(), point)
-	if err != nil {
-		log.Fatalf("%s Error writing point to InfluxDB: %v\n", INFLUXDB, err)
-	}
+		// Create a new data point
+		point := influxdb2.NewPointWithMeasurement("dqn_stats").
+            AddTag("part", "part_" + strconv.Itoa(i)).
+            AddField("json_data", string(jsonData)).
+            SetTime(time.Now().UTC())
 
+		// Write the point to InfluxDB
+		err = mg.writeAPI.WritePoint(context.Background(), point)
+        if err != nil {
+            log.Fatalf("%s Error writing point to InfluxDB for part %d: %v\n", INFLUXDB, i, err)
+        }
+    }
 	log.Println(INFLUXDB, "Statistics successfully written to InfluxDB")
 }
 
