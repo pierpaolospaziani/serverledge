@@ -187,7 +187,7 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 
 func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
-	class := r.ClassService
+	// class := r.ClassService
 
 	// arrivalChannel <- arrivalRequest{r, class.Name}
 
