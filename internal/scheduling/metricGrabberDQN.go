@@ -50,7 +50,7 @@ type DQNStats struct {
 	OffloadLatencyEdge 	[][]float64
 }
 
-var penalties []ClassPenalties
+var penaltyMap map[string][]float64
 
 var stats DQNStats
 
@@ -106,11 +106,15 @@ func InitMG() *metricGrabberDQN {
 	    panic(err)
     }
     defer file.Close()
+    var penalties []ClassPenalties
     decoder := json.NewDecoder(file)
     err = decoder.Decode(&penalties)
     if err != nil {
 	    log.Println("%s Error during JSON decode\n", INFLUXDB)
 	    panic(err)
+    }
+    for _, penalty := range penalties {
+        penaltyMap[penalty.Name] = []float64{penalty.DeadlinePenalty, penalty.DropPenalty}
     }
 
 	org := config.GetString(config.STORAGE_DB_ORGNAME, "serverledge")
@@ -151,19 +155,13 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		stats.DeadlinePenalty = append(stats.Reward, 0)
 	} else {
 		stats.Reward = append(stats.Reward, 0)
-		for _, penalty := range penalties {
-			log.Println(penalty.Name, r.ClassService.Name)
-			if penalty.Name == r.ClassService.Name {
-				log.Println(true)
-				if dropped {
-					stats.DropPenalty = append(stats.Reward, penalty.DropPenalty)
-					stats.DeadlinePenalty = append(stats.Reward, 0)
-				} else {
-					stats.DropPenalty = append(stats.Reward, 0)
-					stats.DeadlinePenalty = append(stats.Reward, penalty.DeadlinePenalty)
-				}
-				break
-			}
+		penalties, _ := penaltyMap[r.ClassService.Name]
+		if dropped {
+			stats.DropPenalty = append(stats.Reward, penalties[0])
+			stats.DeadlinePenalty = append(stats.Reward, 0)
+		} else {
+			stats.DropPenalty = append(stats.Reward, 0)
+			stats.DeadlinePenalty = append(stats.Reward, penalties[1])
 		}
 	}
 
