@@ -60,7 +60,7 @@ def invoke_function(function_name, param, class_name):
     os.system(command)
 
 
-duration = 3600
+duration = 3700
 
 threads = []
 for func in functions:

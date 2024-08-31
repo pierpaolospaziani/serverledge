@@ -43,7 +43,7 @@ var stats DQNStats
 
 var initTime time.Time
 
-var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 1800)
+var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 3600)
 var updateRound = 0
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
