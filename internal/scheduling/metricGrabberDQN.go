@@ -113,6 +113,7 @@ func InitMG() *metricGrabberDQN {
 	    log.Println("%s Error during JSON decode\n", INFLUXDB)
 	    panic(err)
     }
+    penaltyMap = make(map[string][]float64)
     for _, penalty := range penalties {
         penaltyMap[penalty.Name] = []float64{penalty.DeadlinePenalty, penalty.DropPenalty}
     }
