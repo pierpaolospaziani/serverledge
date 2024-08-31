@@ -82,12 +82,12 @@ func EmptyStats() DQNStats{
 	    Critical1: 			 []int{0,0,0,0},
 	    Critical2: 			 []int{0,0,0,0},
 	    Batch:     			 []int{0,0,0,0},
-	    ResponseTime: 		 [][]float64{},
+	    ResponseTime: 		 [][]float64{{},{},{},{},{}},
 		IsWarmStart:		 [][]int{{0,0},{0,0},{0,0},{0,0},{0,0}},
-		InitTime: 			 [][]float64{},
-		Duration: 			 [][]float64{},
-		OffloadLatencyCloud: [][]float64{},
-		OffloadLatencyEdge:  [][]float64{},
+		InitTime: 			 [][]float64{{},{},{},{},{}},
+		Duration: 			 [][]float64{{},{},{},{},{}},
+		OffloadLatencyCloud: [][]float64{{},{},{},{},{}},
+		OffloadLatencyEdge:  [][]float64{{},{},{},{},{}},
 	}
 	return stats
 }
@@ -194,7 +194,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 	    	log.Fatalf("%s Error during function number conversion:%v\n", INFLUXDB, err)
 	    }
 	    index--
-	    
+
     	stats.ResponseTime[index] = append(stats.ResponseTime[index], r.ExecReport.ResponseTime)
     	if r.ExecReport.IsWarmStart {
     		stats.IsWarmStart[index][0]++
