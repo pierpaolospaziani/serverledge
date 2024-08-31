@@ -152,8 +152,8 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
 	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
-		stats.DropPenalty = append(stats.Reward, 0)
-		stats.DeadlinePenalty = append(stats.Reward, 0)
+		stats.DropPenalty = append(stats.DropPenalty, 0)
+		stats.DeadlinePenalty = append(stats.DeadlinePenalty, 0)
 	} else {
 		stats.Reward = append(stats.Reward, 0)
 		penalties, exists := penaltyMap[r.ClassService.Name]
@@ -161,11 +161,11 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 			penalties = []float64{0,0} // for default class
 		}
 		if dropped {
-			stats.DropPenalty = append(stats.Reward, penalties[0])
-			stats.DeadlinePenalty = append(stats.Reward, 0)
+			stats.DropPenalty = append(stats.DropPenalty, penalties[0])
+			stats.DeadlinePenalty = append(stats.DeadlinePenalty, 0)
 		} else {
-			stats.DropPenalty = append(stats.Reward, 0)
-			stats.DeadlinePenalty = append(stats.Reward, penalties[1])
+			stats.DropPenalty = append(stats.DropPenalty, 0)
+			stats.DeadlinePenalty = append(stats.DeadlinePenalty, penalties[1])
 		}
 	}
 
