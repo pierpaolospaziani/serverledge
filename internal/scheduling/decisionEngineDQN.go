@@ -170,7 +170,7 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
 	availableMemory := float32(node.Resources.MaxMemMB) * state.PercAvailableLocalMemory
 	canExecuteLocally := canExecute(r.Fun)
-	log.Println("availableMemory =",availableMemory, "| canExecuteLocally ="canExecuteLocally)
+	log.Println("availableMemory =",availableMemory, "| canExecuteLocally =",canExecuteLocally)
 	canExecuteOnCloud := state.HasBeenOffloaded == 0.0
 	canExecuteOnEdge := state.CanExecuteOnEdge == 1.0 && state.HasBeenOffloaded == 0.0
 	if !canExecuteLocally {
