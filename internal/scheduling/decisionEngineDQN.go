@@ -168,7 +168,7 @@ func getState(r *scheduledRequest) State {
 
 func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
-	availableMemory := node.Resources.MaxMemMB * state[0]
+	availableMemory := node.Resources.MaxMemMB * state.PercAvailableLocalMemory
 	canExecuteLocally := canExecute(r.Fun)
 	log.Println("availableMemory = ",availableMemory, "| canExecuteLocally = canExecuteLocally")
 	canExecuteOnCloud := state.HasBeenOffloaded == 0.0
