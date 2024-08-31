@@ -8,6 +8,8 @@
   {
     "name": "critical-2",
     "utility": 0.01,
+    "deadlinePenalty": 0.75,
+    "dropPenalty": 0.75,
     "maximumResponseTime": 0.5,
     "completedPercentage": 0
   },

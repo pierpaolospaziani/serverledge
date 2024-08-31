@@ -7,6 +7,7 @@ import (
 	"time"
 	"strconv"
     "unicode"
+    "os"
 
 	"github.com/grussorusso/serverledge/internal/config"
 
@@ -16,14 +17,22 @@ import (
 
 const INFLUXDB = "[INFLUXDB]:"
 
+type ClassPenalties struct {
+    Name			string  `json:"name"`
+    DeadlinePenalty	float64 `json:"deadlinePenalty"`
+    DropPenalty 	float64 `json:"dropPenalty"`
+}
+
 type DQNStats struct {
 	Exec	[]float64	// list of seconds in which exec append
 	Cloud	[]float64	// list of seconds in which offload cloud append
 	Edge	[]float64	// list of seconds in which offload edge append
 	Drop	[]float64	// list of seconds in which drop append
 
-	Reward 	[]float64	// list of rewards obtained
-	Cost 	[]float64	// list of costs
+	Reward 			[]float64	// list of rewards obtained
+	DeadlinePenalty	[]float64	// list of deadline penalties
+	DropPenalty 	[]float64	// list of drop penalties
+	Cost 			[]float64	// list of costs
 
 	// counts how many times an action has been taken for that class
 	// LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
@@ -40,6 +49,8 @@ type DQNStats struct {
 	OffloadLatencyCloud [][]float64
 	OffloadLatencyEdge 	[][]float64
 }
+
+var penalties []ClassPenalties
 
 var stats DQNStats
 
@@ -64,6 +75,8 @@ func EmptyStats() DQNStats{
 	    Edge:      			 []float64{},
 	    Drop:      			 []float64{},
 	    Reward:    			 []float64{},
+	    DeadlinePenalty:	 []float64{},
+	    DropPenalty:		 []float64{},
 	    Cost:      			 []float64{},
 	    Standard:  			 []int{0,0,0,0},
 	    Critical1: 			 []int{0,0,0,0},
@@ -85,6 +98,26 @@ func InitMG() *metricGrabberDQN {
 	stats = EmptyStats()
 
 	initTime = time.Now()
+
+	file, err := os.Open("serverledge-classes.json")
+    if err != nil {
+	    log.Println("%s Error opening classes file\n", INFLUXDB)
+	    panic(err)
+    }
+    defer file.Close()
+
+    decoder := json.NewDecoder(file)
+    err = decoder.Decode(&penalties)
+    if err != nil {
+	    log.Println("%s Error during JSON decode\n", INFLUXDB)
+	    panic(err)
+    }
+
+    for _, penalty := range penalties {
+        log.Println("Name: %s\n", penalty.Name)
+        log.Println("Maximum Response Time: %.2f\n", penalty.DeadlinePenalty)
+        log.Println("Completed Percentage: %.2f\n\n", penalty.DropPenalty)
+    }
 
 	org := config.GetString(config.STORAGE_DB_ORGNAME, "serverledge")
 	url := config.GetString(config.STORAGE_DB_ADDRESS, "http://localhost:8086")
