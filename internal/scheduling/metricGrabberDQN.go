@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 	"strconv"
+    "unicode"
 
 	"github.com/grussorusso/serverledge/internal/config"
 
@@ -31,12 +32,13 @@ type DQNStats struct {
 	Critical2 	[]int
 	Batch 		[]int
 
-	ResponseTime 		[]float64
-	IsWarmStart  		[]bool
-	InitTime 	 		[]float64
-	Duration 	 		[]float64
-	OffloadLatencyCloud []float64
-	OffloadLatencyEdge 	[]float64
+	// stats for function (f1,f2,f3,f4,f5)
+	ResponseTime 		[][]float64
+	IsWarmStart  		[][]int 	// [[f1_warm,f1_cold], ... ]
+	InitTime 	 		[][]float64
+	Duration 	 		[][]float64
+	OffloadLatencyCloud [][]float64
+	OffloadLatencyEdge 	[][]float64
 }
 
 var stats DQNStats
@@ -67,12 +69,12 @@ func EmptyStats() DQNStats{
 	    Critical1: 			 []int{0,0,0,0},
 	    Critical2: 			 []int{0,0,0,0},
 	    Batch:     			 []int{0,0,0,0},
-	    ResponseTime: 		 []float64{},
-		IsWarmStart:		 []bool{},
-		InitTime: 			 []float64{},
-		Duration: 			 []float64{},
-		OffloadLatencyCloud: []float64{},
-		OffloadLatencyEdge:  []float64{},
+	    ResponseTime: 		 [][]float64{},
+		IsWarmStart:		 [][]int{{0,0},{0,0},{0,0},{0,0},{0,0}},
+		InitTime: 			 [][]float64{},
+		Duration: 			 [][]float64{},
+		OffloadLatencyCloud: [][]float64{},
+		OffloadLatencyEdge:  [][]float64{},
 	}
 	return stats
 }
@@ -136,14 +138,30 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
     }
 
     if !dropped {
-    	stats.ResponseTime = append(stats.ResponseTime, r.ExecReport.ResponseTime)
-    	stats.IsWarmStart = append(stats.IsWarmStart, r.ExecReport.IsWarmStart)
-    	stats.InitTime = append(stats.InitTime, r.ExecReport.InitTime)
-    	stats.Duration = append(stats.Duration, r.ExecReport.Duration)
+		var numStr string
+		for _, char := range r.Fun.Name {
+	        if unicode.IsDigit(char) {
+	            numStr += string(char)
+	        }
+	    }
+	    index, err := strconv.Atoi(numStr)
+	    if err != nil {
+	    	log.Fatalf("%s Error during function number conversion:%v\n", INFLUXDB, err)
+	    }
+	    index--
+
+    	stats.ResponseTime[index] = append(stats.ResponseTime[index], r.ExecReport.ResponseTime)
+    	if r.ExecReport.IsWarmStart {
+    		stats.IsWarmStart[index][0]++
+    	} else {
+    		stats.IsWarmStart[index][1]++
+    	}
+    	stats.InitTime[index] = append(stats.InitTime[index], r.ExecReport.InitTime)
+    	stats.Duration[index] = append(stats.Duration[index], r.ExecReport.Duration)
 		if r.ExecReport.SchedAction == "O_C"{
-    		stats.OffloadLatencyCloud = append(stats.OffloadLatencyCloud, r.ExecReport.OffloadLatencyCloud)
+			stats.OffloadLatencyCloud[index] = append(stats.OffloadLatencyCloud[index], r.ExecReport.OffloadLatencyCloud)
 		} else if r.ExecReport.SchedAction == "O_E"{
-	    	stats.OffloadLatencyEdge = append(stats.OffloadLatencyEdge, r.ExecReport.OffloadLatencyEdge)
+			stats.OffloadLatencyEdge[index] = append(stats.OffloadLatencyEdge[index], r.ExecReport.OffloadLatencyEdge)
 		}
     }
 
