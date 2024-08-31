@@ -99,24 +99,18 @@ func InitMG() *metricGrabberDQN {
 
 	initTime = time.Now()
 
+	// retrieve penalties from json classes file
 	file, err := os.Open("serverledge-classes.json")
     if err != nil {
 	    log.Println("%s Error opening classes file\n", INFLUXDB)
 	    panic(err)
     }
     defer file.Close()
-
     decoder := json.NewDecoder(file)
     err = decoder.Decode(&penalties)
     if err != nil {
 	    log.Println("%s Error during JSON decode\n", INFLUXDB)
 	    panic(err)
-    }
-
-    for _, penalty := range penalties {
-        log.Println("Name: %s\n", penalty.Name)
-        log.Println("Maximum Response Time: %.2f\n", penalty.DeadlinePenalty)
-        log.Println("Completed Percentage: %.2f\n\n", penalty.DropPenalty)
     }
 
 	org := config.GetString(config.STORAGE_DB_ORGNAME, "serverledge")
@@ -153,8 +147,24 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
 	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
+		stats.DropPenalty = append(stats.Reward, 0)
+		stats.DeadlinePenalty = append(stats.Reward, 0)
 	} else {
 		stats.Reward = append(stats.Reward, 0)
+		for _, penalty := range penalties {
+			log.Println(penalty.Name, r.ClassService.Name)
+			if penalty.Name == r.ClassService.Name {
+				log.Println(true)
+				if dropped {
+					stats.DropPenalty = append(stats.Reward, penalty.DropPenalty)
+					stats.DeadlinePenalty = append(stats.Reward, 0)
+				} else {
+					stats.DropPenalty = append(stats.Reward, 0)
+					stats.DeadlinePenalty = append(stats.Reward, penalty.DeadlinePenalty)
+				}
+				break
+			}
+		}
 	}
 
 	stats.Cost = append(stats.Cost, r.ExecReport.Cost)
