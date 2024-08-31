@@ -168,8 +168,9 @@ func getState(r *scheduledRequest) State {
 
 func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
-	// availableMemory := node.Resources.MaxMemMB * state[0]
+	availableMemory := node.Resources.MaxMemMB * state[0]
 	canExecuteLocally := canExecute(r.Fun)
+	log.Println("availableMemory = ",availableMemory, "| canExecuteLocally = canExecuteLocally")
 	canExecuteOnCloud := state.HasBeenOffloaded == 0.0
 	canExecuteOnEdge := state.CanExecuteOnEdge == 1.0 && state.HasBeenOffloaded == 0.0
 	if !canExecuteLocally {
@@ -215,7 +216,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	    }
     }
 
-	log.Println("Action =", action)
+	log.Println("Filter:",actionFilter,"-> Action =", action)
 
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
