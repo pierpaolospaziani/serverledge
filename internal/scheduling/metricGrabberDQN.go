@@ -156,8 +156,10 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		stats.DeadlinePenalty = append(stats.Reward, 0)
 	} else {
 		stats.Reward = append(stats.Reward, 0)
-		penalties, _ := penaltyMap[r.ClassService.Name]
-		log.Println("PENALTIES:",penalties)
+		penalties, exists := penaltyMap[r.ClassService.Name]
+		if !exists {
+			penalties = []float64{0,0} // for default class
+		}
 		if dropped {
 			stats.DropPenalty = append(stats.Reward, penalties[0])
 			stats.DeadlinePenalty = append(stats.Reward, 0)
@@ -192,7 +194,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 	    	log.Fatalf("%s Error during function number conversion:%v\n", INFLUXDB, err)
 	    }
 	    index--
-	    log.Println("INDEX:", index)
+	    
     	stats.ResponseTime[index] = append(stats.ResponseTime[index], r.ExecReport.ResponseTime)
     	if r.ExecReport.IsWarmStart {
     		stats.IsWarmStart[index][0]++
