@@ -243,34 +243,49 @@ func updateClassStats(slice *[]int, dropped bool, schedAction string) {
 
 // Writes stats as a JSON object to InfluxDB
 func (mg *metricGrabberDQN) WriteJSON() {
-	parts := []interface{}{
-        stats.Exec, stats.Cloud, stats.Edge, stats.Drop,
-        stats.Reward, stats.DeadlinePenalty, stats.DropPenalty, stats.Cost,
-        stats.Standard, stats.Critical1, stats.Critical2, stats.Batch,
-        stats.ResponseTime, stats.IsWarmStart, stats.InitTime, stats.Duration,
-        stats.OffloadLatencyCloud, stats.OffloadLatencyEdge,
+    // Mappa di nomi delle variabili e i loro valori
+    parts := map[string]interface{}{
+        "Exec":               stats.Exec,
+        "Cloud":              stats.Cloud,
+        "Edge":               stats.Edge,
+        "Drop":               stats.Drop,
+        "Reward":             stats.Reward,
+        "DeadlinePenalty":    stats.DeadlinePenalty,
+        "DropPenalty":        stats.DropPenalty,
+        "Cost":               stats.Cost,
+        "Standard":           stats.Standard,
+        "Critical1":          stats.Critical1,
+        "Critical2":          stats.Critical2,
+        "Batch":              stats.Batch,
+        "ResponseTime":       stats.ResponseTime,
+        "IsWarmStart":        stats.IsWarmStart,
+        "InitTime":           stats.InitTime,
+        "Duration":           stats.Duration,
+        "OffloadLatencyCloud": stats.OffloadLatencyCloud,
+        "OffloadLatencyEdge":  stats.OffloadLatencyEdge,
     }
 
-    for i, part := range parts {
-		// Convert DQNStats to JSON string
-		jsonData, err := json.Marshal(part)
+    for name, part := range parts {
+        // Convert DQNStats to JSON string
+        jsonData, err := json.Marshal(part)
         if err != nil {
-            log.Fatalf("%s Error marshalling JSON part %d: %v\n", INFLUXDB, i, err)
+            log.Fatalf("%s Error marshalling JSON part '%s': %v\n", INFLUXDB, name, err)
         }
 
-		// Create a new data point
-		point := influxdb2.NewPointWithMeasurement("dqn_stats").
-            AddTag("part", "part_" + strconv.Itoa(i)).
+        // Create a new data point
+        point := influxdb2.NewPointWithMeasurement("dqn_stats").
+            AddTag("name", name).
             AddField("json_data", string(jsonData)).
             SetTime(time.Now().UTC())
 
-		// Write the point to InfluxDB
-		err = mg.writeAPI.WritePoint(context.Background(), point)
+        // Write the point to InfluxDB
+        err = mg.writeAPI.WritePoint(context.Background(), point)
         if err != nil {
-            log.Fatalf("%s Error writing point to InfluxDB for part %d: %v\n", INFLUXDB, i, err)
+            log.Fatalf("%s Error writing point to InfluxDB for part '%s': %v\n", INFLUXDB, name, err)
         }
     }
-	log.Println(INFLUXDB, "Statistics successfully written to InfluxDB")
+
+    log.Println(INFLUXDB, "Statistics successfully written to InfluxDB")
 }
 
 
