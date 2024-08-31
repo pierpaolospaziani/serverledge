@@ -8,6 +8,7 @@ import (
 	"strconv"
     "unicode"
     "os"
+	"sync"
 
 	"github.com/grussorusso/serverledge/internal/config"
 
@@ -58,6 +59,7 @@ var initTime time.Time
 
 var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 3600)
 var updateRound = 0
+var mu sync.Mutex
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
 type metricGrabberDQN struct {
@@ -212,10 +214,14 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
-    	mg.WriteJSON()
-		stats = EmptyStats()
-    	updateRound++
-    }
+    	mu.Lock()
+    	if elapsedTimeInSeconds-float64(updateEvery*updateRound) > float64(updateEvery) {
+	        mg.WriteJSON()
+	        stats = EmptyStats()
+	        updateRound++
+	    }
+	    mu.Unlock()
+	}
 }
 
 
@@ -239,9 +245,10 @@ func updateClassStats(slice *[]int, dropped bool, schedAction string) {
 func (mg *metricGrabberDQN) WriteJSON() {
 	parts := []interface{}{
         stats.Exec, stats.Cloud, stats.Edge, stats.Drop,
-        stats.Reward, stats.Cost, stats.Standard, stats.Critical1,
-        stats.Critical2, stats.Batch, stats.ResponseTime, stats.IsWarmStart,
-        stats.InitTime, stats.Duration, stats.OffloadLatencyCloud, stats.OffloadLatencyEdge,
+        stats.Reward, stats.DeadlinePenalty, stats.DropPenalty, stats.Cost,
+        stats.Standard, stats.Critical1, stats.Critical2, stats.Batch,
+        stats.ResponseTime, stats.IsWarmStart, stats.InitTime, stats.Duration,
+        stats.OffloadLatencyCloud, stats.OffloadLatencyEdge,
     }
 
     for i, part := range parts {
