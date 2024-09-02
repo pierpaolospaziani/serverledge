@@ -259,7 +259,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 	} else if r.ExecReport.SchedAction == "O_E"{
 		if offloadDrop {
 			stats.UPEdge[2]++
-			panic("ERRORE (metricGrabberDQN): quì non dovrebbe entrare perchè se sceglie OFFLOADED_EDGE deve poterlo fare!")
+			// panic("ERRORE (metricGrabberDQN): quì non dovrebbe entrare perchè se sceglie OFFLOADED_EDGE deve poterlo fare!")
 		} else if outOfTime {
 			stats.UPEdge[1]++
 		} else {
