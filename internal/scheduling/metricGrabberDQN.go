@@ -155,12 +155,12 @@ func InitMG() *metricGrabberDQN {
 }
 
 
-func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
+func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offloadDrop bool) {
 	muStats.Lock()
 	defer muStats.Unlock()
 
 	dropped := false
-	if r.ExecReport.Result == "" || actionDrop {
+	if actionDrop || offloadDrop {
 		dropped = true
 	}
 	outOfTime := false
@@ -185,6 +185,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
 		}
 	}
 
+	// 'dropped' cause i want the outcome of the request
 	if !dropped && !outOfTime {
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
 		stats.DropPenalty = append(stats.DropPenalty, 0)
@@ -206,6 +207,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
 
 	stats.Cost = append(stats.Cost, r.ExecReport.Cost)
 
+	// actionDrop (and not dropped) cause i want the chosen action per class, not the outcome of the request 
 	switch r.ClassService.Name {
     case "batch":
         updateClassStats(&stats.Batch, actionDrop, r.ExecReport.SchedAction)
@@ -217,6 +219,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
         updateClassStats(&stats.Standard, actionDrop, r.ExecReport.SchedAction)
     }
 
+	// 'dropped' cause those are stats for completions
     if !dropped {
 		var numStr string
 		for _, char := range r.Fun.Name {
@@ -246,7 +249,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
     }
 
 	if r.ExecReport.SchedAction == "O_C"{
-		if dropped {
+		if offloadDrop {
 			stats.UPCloud[2]++
 		} else if outOfTime {
 			stats.UPCloud[1]++
@@ -254,16 +257,18 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
 			stats.UPCloud[0]++
 		}
 	} else if r.ExecReport.SchedAction == "O_E"{
-		if dropped {
+		if offloadDrop {
 			stats.UPEdge[2]++
+			panic("ERRORE (metricGrabberDQN): quì non dovrebbe entrare perchè se sceglie OFFLOADED_EDGE deve poterlo fare!")
 		} else if outOfTime {
 			stats.UPEdge[1]++
 		} else {
 			stats.UPEdge[0]++
 		}
-	} else if !actionDrop{
-		if dropped {
+	} else {
+		if actionDrop {
 			stats.UPExec[2]++
+			panic("ERRORE (metricGrabberDQN): quì non dovrebbe entrare perchè il filtro dovrebbe impedirglielo!")
 		} else if outOfTime {
 			stats.UPExec[1]++
 		} else {

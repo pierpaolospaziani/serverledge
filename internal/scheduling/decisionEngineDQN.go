@@ -225,7 +225,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
     action = (action + 1) % 4
 
 	if action == DROP_REQUEST {
-		d.mg.addStats(r,true)
+		d.mg.addStats(r,true,false)
 	}
 	return action
 }
@@ -251,7 +251,8 @@ func (d *decisionEngineDQN) CloseSession() {
 
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
 	// log.Println("COMPLETED: in decisionEngineDQN")
-	d.mg.addStats(r,false)
+	offloadDrop := offloaded != 0
+	d.mg.addStats(r,false,offloadDrop)
 }
 
 

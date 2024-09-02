@@ -72,12 +72,18 @@ func Run(p Policy) {
 
 			go p.OnArrival(r)
 		case c = <-completions:
-			node.ReleaseContainer(c.contID, c.Fun)
+			// if is Drop from Offload don't do ReleaseContainer
+			if !c.scheduledRequest.ExecReport.HasBeenDropped {
+				node.ReleaseContainer(c.contID, c.Fun)
+			}
 			p.OnCompletion(c.scheduledRequest)
 
-			// fixme: why always true?
-			if metrics.Enabled && (r.ExecReport.SchedAction != SCHED_ACTION_OFFLOAD_CLOUD || r.ExecReport.SchedAction != SCHED_ACTION_OFFLOAD_EDGE) {
-				addCompletedMetrics(r)
+			// if is Drop from Offload don't do
+			if !c.scheduledRequest.ExecReport.HasBeenDropped {
+				// fixme: why always true?
+				if metrics.Enabled && (r.ExecReport.SchedAction != SCHED_ACTION_OFFLOAD_CLOUD || r.ExecReport.SchedAction != SCHED_ACTION_OFFLOAD_EDGE) {
+					addCompletedMetrics(r)
+				}
 			}
 		}
 	}
@@ -116,6 +122,10 @@ func SubmitRequest(r *function.Request) error {
 		// FIXME AUDIT log.Printf("Offloading request")
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
+			if _, ok := policy.(*DQNPolicy); ok && err == node.OutOfResourcesErr{
+				r.ExecReport.HasBeenDropped = true
+				completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
+			}
 			return err
 		}
 	} else {

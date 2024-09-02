@@ -19,11 +19,13 @@ func (p *DQNPolicy) Init() {
 func (p *DQNPolicy) OnCompletion(r *scheduledRequest) {
 	// log.Printf("Completed execution of %s in %f\n", r.Fun.Name, r.ExecReport.ResponseTime)
 	if r.ExecReport.SchedAction == SCHED_ACTION_OFFLOAD_CLOUD {
-		e.Completed(r, OFFLOADED_CLOUD)
+		e.Completed(r, 0)
 	} else if r.ExecReport.SchedAction == SCHED_ACTION_OFFLOAD_EDGE {
-		e.Completed(r, OFFLOADED_EDGE)
+		e.Completed(r, 0)
+	} else if r.ExecReport.HasBeenDropped {
+		e.Completed(r, 1)
 	} else {
-		e.Completed(r, LOCAL)
+		e.Completed(r, 0)
 	}
 }
 
