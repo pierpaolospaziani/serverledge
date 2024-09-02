@@ -155,16 +155,24 @@ func InitMG() *metricGrabberDQN {
 }
 
 
-func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
-	log.Println(r.ExecReport.Result)
-	if r.ExecReport.Result != "Done"{
-		panic("ECCOLO")
-	}
+func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool) {
 	muStats.Lock()
 	defer muStats.Unlock()
+
+	dropped := false
+	if r.ExecReport.Result == "" || actionDrop {
+		dropped = true
+	}
+	outOfTime := false
+	if r.ExecReport.ResponseTime > r.ClassService.MaximumResponseTime {
+		outOfTime = true
+	}
+
 	elapsedTime := r.Arrival.Sub(initTime)
 	elapsedTimeInSeconds := float64(elapsedTime.Seconds())
-	if dropped {
+	
+	// actionDrop (and not dropped) cause i want the chosen action not the outcome of the request
+	if actionDrop {
 		stats.Drop = append(stats.Drop, elapsedTimeInSeconds)
 	} else {
 		switch r.ExecReport.SchedAction {
@@ -177,9 +185,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		}
 	}
 
-	// var outcome string
-	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
-		// outcome = "ok"
+	if !dropped && !outOfTime {
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
 		stats.DropPenalty = append(stats.DropPenalty, 0)
 		stats.DeadlinePenalty = append(stats.DeadlinePenalty, 0)
@@ -202,13 +208,13 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
 	switch r.ClassService.Name {
     case "batch":
-        updateClassStats(&stats.Batch, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Batch, actionDrop, r.ExecReport.SchedAction)
     case "critical-1":
-        updateClassStats(&stats.Critical1, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Critical1, actionDrop, r.ExecReport.SchedAction)
     case "critical-2":
-        updateClassStats(&stats.Critical2, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Critical2, actionDrop, r.ExecReport.SchedAction)
     default:
-        updateClassStats(&stats.Standard, dropped, r.ExecReport.SchedAction)
+        updateClassStats(&stats.Standard, actionDrop, r.ExecReport.SchedAction)
     }
 
     if !dropped {
@@ -239,24 +245,66 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		}
     }
 
-    // if !dropped{
-    // 	if r.ExecReport.SchedAction == "O_C"{
-	// 		stats.UPCloud[index] = append(stats.OffloadLatencyCloud[index], r.ExecReport.OffloadLatencyCloud)
-	// 	} else if r.ExecReport.SchedAction == "O_E"{
-	// 		stats.OffloadLatencyEdge[index] = append(stats.OffloadLatencyEdge[index], r.ExecReport.OffloadLatencyEdge)
-	// 	} else {
+	if r.ExecReport.SchedAction == "O_C"{
+		if dropped {
+			stats.UPCloud[2]++
+		} else if outOfTime {
+			stats.UPCloud[1]++
+		} else {
+			stats.UPCloud[0]++
+		}
+	} else if r.ExecReport.SchedAction == "O_E"{
+		if dropped {
+			stats.UPEdge[2]++
+		} else if outOfTime {
+			stats.UPEdge[1]++
+		} else {
+			stats.UPEdge[0]++
+		}
+	} else if !actionDrop{
+		if dropped {
+			stats.UPExec[2]++
+		} else if outOfTime {
+			stats.UPExec[1]++
+		} else {
+			stats.UPExec[0]++
+		}
+	}
 
-	// 	}
-
-    // } else {
-    // 	UPExec
-	// 	UPCloud
-	// 	UPEdge
-	// 	UPStandard
-	// 	UPCritical1
-	// 	UPCritical2
-	// 	UPBatch
-    // }
+	switch r.ClassService.Name {
+    case "batch":
+		if dropped {
+			stats.UPBatch[2]++
+		} else if outOfTime {
+			stats.UPBatch[1]++
+		} else {
+			stats.UPBatch[0]++
+		}
+    case "critical-1":
+		if dropped {
+			stats.UPCritical1[2]++
+		} else if outOfTime {
+			stats.UPCritical1[1]++
+		} else {
+			stats.UPCritical1[0]++
+		}
+    case "critical-2":
+		if dropped {
+			stats.UPCritical2[2]++
+		} else if outOfTime {
+			stats.UPCritical2[1]++
+		} else {
+			stats.UPCritical2[0]++
+		}
+    default:
+		if dropped {
+			stats.UPStandard[2]++
+		} else if outOfTime {
+			stats.UPStandard[1]++
+		} else {
+			stats.UPStandard[0]++
+		}
+    }
 
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
