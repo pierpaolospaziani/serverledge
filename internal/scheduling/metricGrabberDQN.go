@@ -49,6 +49,17 @@ type DQNStats struct {
 	Duration 	 		[][]float64
 	OffloadLatencyCloud [][]float64
 	OffloadLatencyEdge 	[][]float64
+
+	// [utility,deadlinePenalty,dropPenalty] per action
+	UPExec	[]float64
+	UPCloud	[]float64
+	UPEdge	[]float64
+
+	// [utility,deadlinePenalty,dropPenalty] per class
+	UPStandard 	[]float64
+	UPCritical1 []float64
+	UPCritical2 []float64
+	UPBatch 	[]float64
 }
 
 var penaltyMap map[string][]float64
@@ -91,6 +102,13 @@ func EmptyStats() DQNStats{
 		Duration: 			 [][]float64{{},{},{},{},{}},
 		OffloadLatencyCloud: [][]float64{{},{},{},{},{}},
 		OffloadLatencyEdge:  [][]float64{{},{},{},{},{}},
+		UPExec:      		 []float64{0,0,0},
+	    UPCloud:     		 []float64{0,0,0},
+	    UPEdge:      		 []float64{0,0,0},
+	    UPStandard:      	 []float64{0,0,0},
+	    UPCritical1:    	 []float64{0,0,0},
+	    UPCritical2: 		 []float64{0,0,0},
+	    UPBatch:	 		 []float64{0,0,0},
 	}
 	return stats
 }
@@ -138,6 +156,10 @@ func InitMG() *metricGrabberDQN {
 
 
 func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
+	log.Println(r.ExecReport.Result)
+	if r.ExecReport.Result != "Done"{
+		panic("ECCOLO")
+	}
 	muStats.Lock()
 	defer muStats.Unlock()
 	elapsedTime := r.Arrival.Sub(initTime)
@@ -155,7 +177,9 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		}
 	}
 
+	// var outcome string
 	if !dropped && (r.ExecReport.ResponseTime <= r.ClassService.MaximumResponseTime || r.ClassService.MaximumResponseTime == -1) {
+		// outcome = "ok"
 		stats.Reward = append(stats.Reward, r.ClassService.Utility)
 		stats.DropPenalty = append(stats.DropPenalty, 0)
 		stats.DeadlinePenalty = append(stats.DeadlinePenalty, 0)
@@ -215,6 +239,25 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 		}
     }
 
+    // if !dropped{
+    // 	if r.ExecReport.SchedAction == "O_C"{
+	// 		stats.UPCloud[index] = append(stats.OffloadLatencyCloud[index], r.ExecReport.OffloadLatencyCloud)
+	// 	} else if r.ExecReport.SchedAction == "O_E"{
+	// 		stats.OffloadLatencyEdge[index] = append(stats.OffloadLatencyEdge[index], r.ExecReport.OffloadLatencyEdge)
+	// 	} else {
+
+	// 	}
+
+    // } else {
+    // 	UPExec
+	// 	UPCloud
+	// 	UPEdge
+	// 	UPStandard
+	// 	UPCritical1
+	// 	UPCritical2
+	// 	UPBatch
+    // }
+
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
     	muJson.Lock()
@@ -248,24 +291,31 @@ func updateClassStats(slice *[]int, dropped bool, schedAction string) {
 func (mg *metricGrabberDQN) WriteJSON() {
     // Mappa di nomi delle variabili e i loro valori
     parts := map[string]interface{}{
-        "Exec":               stats.Exec,
-        "Cloud":              stats.Cloud,
-        "Edge":               stats.Edge,
-        "Drop":               stats.Drop,
-        "Reward":             stats.Reward,
-        "DeadlinePenalty":    stats.DeadlinePenalty,
-        "DropPenalty":        stats.DropPenalty,
-        "Cost":               stats.Cost,
-        "Standard":           stats.Standard,
-        "Critical1":          stats.Critical1,
-        "Critical2":          stats.Critical2,
-        "Batch":              stats.Batch,
-        "ResponseTime":       stats.ResponseTime,
-        "IsWarmStart":        stats.IsWarmStart,
-        "InitTime":           stats.InitTime,
-        "Duration":           stats.Duration,
-        "OffloadLatencyCloud": stats.OffloadLatencyCloud,
-        "OffloadLatencyEdge":  stats.OffloadLatencyEdge,
+        "Exec":                	stats.Exec,
+        "Cloud":               	stats.Cloud,
+        "Edge":                	stats.Edge,
+        "Drop":                	stats.Drop,
+        "Reward":              	stats.Reward,
+        "DeadlinePenalty":     	stats.DeadlinePenalty,
+        "DropPenalty":         	stats.DropPenalty,
+        "Cost":                	stats.Cost,
+        "Standard":            	stats.Standard,
+        "Critical1":           	stats.Critical1,
+        "Critical2":           	stats.Critical2,
+        "Batch":               	stats.Batch,
+        "ResponseTime":        	stats.ResponseTime,
+        "IsWarmStart":         	stats.IsWarmStart,
+        "InitTime":            	stats.InitTime,
+        "Duration":            	stats.Duration,
+        "OffloadLatencyCloud":	stats.OffloadLatencyCloud,
+        "OffloadLatencyEdge":  	stats.OffloadLatencyEdge,
+        "UPExec":             	stats.UPExec,
+        "UPCloud":        		stats.UPCloud,
+        "UPEdge":         		stats.UPEdge,
+        "UPStandard":           stats.UPStandard,
+        "UPCritical1":          stats.UPCritical1,
+        "UPCritical2": 			stats.UPCritical2,
+        "UPBatch":  			stats.UPBatch,
     }
 
     for name, part := range parts {
