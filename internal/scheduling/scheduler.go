@@ -123,6 +123,11 @@ func SubmitRequest(r *function.Request) error {
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
 			if _, ok := policy.(*DQNPolicy); ok && err == node.OutOfResourcesErr{
+				if checkIfCloudOffloading(schedDecision.remoteHost) {
+					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
+				} else {
+					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
+				}
 				r.ExecReport.HasBeenDropped = true
 				completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 			}
