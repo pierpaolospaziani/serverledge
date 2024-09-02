@@ -54,12 +54,13 @@ type DQNStats struct {
 var penaltyMap map[string][]float64
 
 var stats DQNStats
+var muStats sync.Mutex
 
 var initTime time.Time
 
 var updateEvery = config.GetInt(config.DQN_STORE_STATS_EVERY, 3600)
 var updateRound = 0
-var mu sync.Mutex
+var muJson sync.Mutex
 
 // metricGrabberDQN encapsulates the InfluxDB client and configuration
 type metricGrabberDQN struct {
@@ -137,6 +138,8 @@ func InitMG() *metricGrabberDQN {
 
 
 func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
+	muStats.Lock()
+	defer muStats.Unlock()
 	elapsedTime := r.Arrival.Sub(initTime)
 	elapsedTimeInSeconds := float64(elapsedTime.Seconds())
 	if dropped {
@@ -214,13 +217,13 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, dropped bool) {
 
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
-    	mu.Lock()
+    	muJson.Lock()
+    	defer muJson.Unlock()
     	if elapsedTimeInSeconds-float64(updateEvery*updateRound) > float64(updateEvery) {
 	        mg.WriteJSON()
 	        stats = EmptyStats()
 	        updateRound++
 	    }
-	    mu.Unlock()
 	}
 }
 
