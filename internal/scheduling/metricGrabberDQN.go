@@ -268,7 +268,6 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 	} else {
 		if actionDrop {
 			stats.UPExec[2]++
-			panic("ERRORE (metricGrabberDQN): quì non dovrebbe entrare perchè il filtro dovrebbe impedirglielo!")
 		} else if outOfTime {
 			stats.UPExec[1]++
 		} else {
