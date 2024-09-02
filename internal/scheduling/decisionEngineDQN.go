@@ -8,6 +8,7 @@ import (
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 
 	"github.com/grussorusso/serverledge/internal/node"
+	"github.com/grussorusso/serverledge/internal/config"
 )
 
 type decisionEngineDQN struct {
@@ -233,7 +234,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 
 func (d *decisionEngineDQN) InitDecisionEngine() {
 	// model initialization
-    modelPath := "model"
+	modelPath := config.GetString(config.DQN_MODEL_PATH, "dqn_models/model")
     dqnModel = LoadModel(modelPath)
     if dqnModel == nil {
         log.Println("Error loading model")
