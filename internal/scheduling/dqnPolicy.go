@@ -35,7 +35,7 @@ func (p *DQNPolicy) OnArrival(r *scheduledRequest) {
 			execLocally(r, containerID, true)
 		} else if !handleColdStart(r) {
 			log.Printf("No warm containers for: %v - COLD START", r)
-			panic("ERRORE (dqnPolicy): quì non dovrebbe entrare perchè il filtro dovrebbe impedirglielo!")
+			// panic("ERRORE (dqnPolicy): quì non dovrebbe entrare perchè il filtro dovrebbe impedirglielo!")
 		}
 	} else if dec == CLOUD_OFFLOAD_REQUEST {
 		handleCloudOffload(r)
