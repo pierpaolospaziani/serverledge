@@ -90,4 +90,6 @@ const STORAGE_DB_ORGNAME = "storage.orgname"
 const DQN_MODEL_PATH = "dqn.model.path"
 const DQN_STORE_STATS_EVERY = "dqn.store.stats.every"
 
+const DEFAULT_STATS = "default.stats"
+
 const DOCKER_LIMIT_CPU = "docker.cpu"

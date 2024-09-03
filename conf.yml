@@ -9,3 +9,4 @@ storage.token: "serverledge"
 storage.bucket: "dqn"
 storage.orgname: "serverledge"
 dqn.store.stats.every: 3600
+default.stats: true

@@ -10,6 +10,7 @@ import (
 
 type DefaultLocalPolicy struct {
 	queue queue
+	mg *metricGrabberDQN
 }
 
 func (p *DefaultLocalPolicy) Init() {
@@ -20,10 +21,17 @@ func (p *DefaultLocalPolicy) Init() {
 	} else {
 		p.queue = nil
 	}
+	needStats := config.GetBool(config.DEFAULT_STATS, false)
+	if needStats{
+		p.mg = InitMG()
+	}
 }
 
 func (p *DefaultLocalPolicy) OnCompletion(completed *scheduledRequest) {
 	if p.queue == nil {
+		if p.mg != nil{
+			p.mg.addDefaultStats(completed,false)
+		}
 		return
 	}
 
@@ -85,6 +93,9 @@ func (p *DefaultLocalPolicy) OnArrival(r *scheduledRequest) {
 	} else {
 		// other error
 		dropRequest(r)
+		if p.mg != nil{
+			p.mg.addDefaultStats(r,true)
+		}
 		return
 	}
 
@@ -99,4 +110,7 @@ func (p *DefaultLocalPolicy) OnArrival(r *scheduledRequest) {
 	}
 
 	dropRequest(r)
+	if p.mg != nil{
+		p.mg.addDefaultStats(r,true)
+	}
 }
