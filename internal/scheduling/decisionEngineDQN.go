@@ -94,12 +94,16 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
     // create a slice with predictions
     prediction := result[0].Value().([][]float32)[0]
 
+    log.Println("Predictions-pre: ", prediction)
+
     // filter the actions
     for i, allowed := range actionFilter {
         if !allowed {
             prediction[i] = 0.0
         }
     }
+
+    log.Println("Predictions-post:", prediction)
 
     // return the index of highest value
     action := 0
@@ -222,8 +226,8 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	    }
     }
 
-	// log.Println("Filter:",actionFilter,"-> Action =", action)
-	log.Println("Action =", action)
+	log.Println("Filter:",actionFilter,"-> Action =", action)
+	// log.Println("Action =", action)
 
 
 	// ------------------------------------------------------------------------
