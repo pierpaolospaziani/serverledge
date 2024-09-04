@@ -7,3 +7,5 @@ storage.address: "http://192.168.122.31:8086"
 storage.token: "serverledge"
 storage.bucket: "dqn"
 storage.orgname: "serverledge"
+registry.nearby.interval: 1
+registry.monitoring.interval: 1

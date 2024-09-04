@@ -3,3 +3,5 @@ etcd.address: 192.168.122.31:2379
 metrics.enabled: false
 scheduler.policy: "default"
 container.pool.memory: 2560
+registry.nearby.interval: 1
+registry.monitoring.interval: 1

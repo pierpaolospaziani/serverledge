@@ -10,3 +10,5 @@ storage.bucket: "dqn"
 storage.orgname: "serverledge"
 dqn.store.stats.every: 3600
 default.stats: true
+registry.nearby.interval: 1
+registry.monitoring.interval: 1
