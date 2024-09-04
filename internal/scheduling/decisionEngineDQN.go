@@ -89,7 +89,7 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
     // create a slice with predictions
     prediction := result[0].Value().([][]float32)[0]
 
-    log.Println("Predictions-pre: ", prediction)
+    log.Println("[DE_DQN] Predictions-pre: ", prediction)
 
     // filter the actions
     for i, allowed := range actionFilter {
@@ -98,7 +98,7 @@ func (m *Model) Predict(s State, actionFilter []bool) (int, error) {
         }
     }
 
-    log.Println("Predictions-post:", prediction)
+    log.Println("[DE_DQN] Predictions-post:", prediction)
 
     // return the index of highest value
     action := 0
@@ -175,7 +175,7 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 	actionFilter := []bool{true, true, true, true}
 	// availableMemory := float32(node.Resources.MaxMemMB) * state.PercAvailableLocalMemory
 	canExecuteLocally := canExecute(r.Fun)
-	// log.Println("availableMemory =",availableMemory, "| canExecuteLocally =",canExecuteLocally)
+	// log.Println("[DE_DQN] availableMemory =",availableMemory, "| canExecuteLocally =",canExecuteLocally)
 	canExecuteOnCloud := state.HasBeenOffloaded == 0.0
 	canExecuteOnEdge := state.CanExecuteOnEdge == 1.0 && state.HasBeenOffloaded == 0.0
 	if !canExecuteLocally {
@@ -216,13 +216,13 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
     	var err error
     	action, err = dqnModel.Predict(state, actionFilter)
 	    if err != nil {
-	        log.Println("Error predicting:", err)
+	        log.Println("[DE_DQN] Error predicting:", err)
 	        return -1
 	    }
     }
 
-	log.Println("Filter:",actionFilter,"-> Action =", action)
-	// log.Println("Action =", action)
+	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action)
+	// log.Println("[DE_DQN] Action =", action)
 
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
@@ -241,7 +241,7 @@ func (d *decisionEngineDQN) InitDecisionEngine() {
 	modelPath := config.GetString(config.DQN_MODEL_PATH, "dqn_models/model")
     dqnModel = LoadModel(modelPath)
     if dqnModel == nil {
-        log.Println("Error loading model")
+        log.Println("[DE_DQN] Error loading model")
         return
     }
     d.mg = InitMG()
@@ -255,7 +255,7 @@ func (d *decisionEngineDQN) CloseSession() {
 
 
 func (d *decisionEngineDQN) Completed(r *scheduledRequest, offloaded int) {
-	// log.Println("COMPLETED: in decisionEngineDQN")
+	// log.Println("[DE_DQN] COMPLETED: in decisionEngineDQN")
 	offloadDrop := offloaded != 0
 	d.mg.addStats(r,false,offloadDrop)
 }
