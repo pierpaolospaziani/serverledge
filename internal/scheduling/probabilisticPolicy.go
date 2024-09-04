@@ -41,7 +41,7 @@ func (p *ProbabilisticPolicy) OnArrival(r *scheduledRequest) {
 				log.Printf("Found node at url: %s - proceeding with horizontal offloading", url)
 				handleEdgeOffload(r, url)
 			} else {
-				tryCloudOffload(r)
+				handleCloudOffload(r)
 			}
 		} else {
 			log.Printf("Can't execute locally and can't offload - dropping incoming request")
@@ -55,7 +55,7 @@ func (p *ProbabilisticPolicy) OnArrival(r *scheduledRequest) {
 			handleEdgeOffload(r, url)
 		} else {
 			log.Println("Can't execute horizontal offloading due to lack of resources available: offloading to cloud")
-			tryCloudOffload(r)
+			handleCloudOffload(r)
 		}
 	} else if dec == DROP_REQUEST {
 		dropRequest(r)
