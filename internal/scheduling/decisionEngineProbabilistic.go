@@ -4,6 +4,8 @@ import (
 	"log"
 	"strings"
 	"os"
+	"math/rand"
+	"time"
 	"encoding/json"
 )
 
@@ -12,6 +14,8 @@ type decisionEngineProbabilistic struct {
 }
 
 var probabilities map[string]map[string][]float64
+
+var globalRand *rand.Rand
 
 func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 	function := r.Fun.Name
@@ -72,7 +76,7 @@ func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 
 	//log.Printf("Probabilities after evaluation for %s-%s are pL:%f pE:%f pC:%f pD:%f", name, class.Name, pL, pE, pC, pD)
 
-	prob := rGen.Float64()
+	prob := globalRand.Float64()
 	//log.Printf("prob: %f", prob)
 	if prob <= pL {
 		//log.Println("Execute LOCAL")
@@ -144,6 +148,8 @@ func (d *decisionEngineProbabilistic) InitDecisionEngine() {
         log.Println("}")
     }
     
+    globalRand = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	d.mg = InitMG()
 }
 
