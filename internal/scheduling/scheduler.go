@@ -122,7 +122,9 @@ func SubmitRequest(r *function.Request) error {
 		// FIXME AUDIT log.Printf("Offloading request")
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
-			if _, ok := policy.(*DQNPolicy); ok && err == node.OutOfResourcesErr{
+			_, isDQN := policy.(*DQNPolicy)
+			_, isProbabilistic := policy.(*ProbabilisticPolicy)
+			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
 				if checkIfCloudOffloading(schedDecision.remoteHost) {
 					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
 				} else {
