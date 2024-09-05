@@ -166,7 +166,7 @@ func getState(r *scheduledRequest) State {
     if !r.CanDoOffloading {
     	state.HasBeenOffloaded = 1.0
     }
-    log.Printf("State = %+v", state)
+    log.Printf("[DE_DQN] State = %+v", state)
 	return state
 }
 
