@@ -28,16 +28,16 @@ func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 
 	if classes, ok := probabilities[function]; ok {
         if probs, ok := classes[class]; ok {
-            log.Printf("Probabilità per %s e classe %s: %v\n", function, class, probs)
+            log.Printf("Probability for %s - %s: %v\n", function, class, probs)
 			pL = probs[0]
 			pC = probs[1]
 			pE = probs[2]
 			pD = probs[3]
         } else {
-            log.Printf("Classe %s non trovata per funzione %s\n", class, function)
+            panic("Class not found")
         }
     } else {
-        log.Printf("Funzione %s non trovata\n", function)
+        panic("Function not found")
     }
 
 	if !r.CanDoOffloading {
@@ -61,23 +61,10 @@ func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 		}
 	}
 
-	// if !canAffordCloudOffloading(r) {
-	// 	pC = 0
-	// 	if pL == 0 && pE == 0 && pD == 0 {
-	// 		pL = 0
-	// 		pE = 0
-	// 		pD = 1
-	// 	} else {
-	// 		pL = pL / (pL + pE + pD)
-	// 		pE = pE / (pL + pE + pD)
-	// 		pD = pD / (pL + pE + pD)
-	// 	}
-	// }
-
-	//log.Printf("Probabilities after evaluation for %s-%s are pL:%f pE:%f pC:%f pD:%f", name, class.Name, pL, pE, pC, pD)
+	//log.Printf("Probabilities after evaluation for %s-%s are pL:%f pE:%f pC:%f pD:%f", function, class, pL, pE, pC, pD)
 
 	prob := globalRand.Float64()
-	//log.Printf("prob: %f", prob)
+	log.Println("prob:", prob, "-> [",pL,pE,pC,pD,"]")
 	if prob <= pL {
 		//log.Println("Execute LOCAL")
 		return LOCAL_EXEC_REQUEST
@@ -104,8 +91,6 @@ func (d *decisionEngineProbabilistic) InitDecisionEngine() {
         return
     }
     defer file.Close()
-
-    // Mappa per decodificare il JSON
     var data map[string][]float64
     decoder := json.NewDecoder(file)
     err = decoder.Decode(&data)
@@ -113,40 +98,28 @@ func (d *decisionEngineProbabilistic) InitDecisionEngine() {
         log.Println("Errore nella decodifica JSON:", err)
         return
     }
-
-    // Mappa annidata
     probabilities = make(map[string]map[string][]float64)
-
-    // Riempie la mappa annidata
     for key, values := range data {
-        // Separare la funzione e la classe dalla chiave usando strings.Split
         parts := strings.Split(key, "_")
         if len(parts) != 2 {
             log.Println("Chiave non valida:", key)
             continue
         }
-
         function := parts[0]
         class := parts[1]
-
-        // Inizializzare la mappa per la funzione se non esiste
         if _, exists := probabilities[function]; !exists {
             probabilities[function] = make(map[string][]float64)
         }
-
-        // Aggiungere i valori alla mappa della classe
         probabilities[function][class] = values
     }
-
-    // Stampare il risultato
-    log.Println("Mappa annidata:")
-    for function, classes := range probabilities {
-        log.Printf("%s: {\n", function)
-        for class, values := range classes {
-            log.Printf("  %s: %v\n", class, values)
-        }
-        log.Println("}")
-    }
+    // log.Println("Probability Map:")
+    // for function, classes := range probabilities {
+    //     log.Printf("%s: {\n", function)
+    //     for class, values := range classes {
+    //         log.Printf("  %s: %v\n", class, values)
+    //     }
+    //     log.Println("}")
+    // }
     
     globalRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
