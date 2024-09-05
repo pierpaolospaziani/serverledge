@@ -64,7 +64,7 @@ func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 	//log.Printf("Probabilities after evaluation for %s-%s are pL:%f pE:%f pC:%f pD:%f", function, class, pL, pE, pC, pD)
 
 	prob := globalRand.Float64()
-	log.Println("prob:", prob, "-> [",pL,pE,pC,pD,"]")
+	log.Printf("prob: %f -> [%f,%f,%f,%f]", prob,pL,pE,pC,pD)
 	if prob <= pL {
 		//log.Println("Execute LOCAL")
 		return LOCAL_EXEC_REQUEST
