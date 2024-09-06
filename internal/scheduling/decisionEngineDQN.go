@@ -137,7 +137,9 @@ func getState(r *scheduledRequest) State {
 	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
 	log.Printf("FreeableMemory = %f", float32(node.FreeableMemory(r.Fun)))
 	log.Printf("Sum = %f", float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)))
-	log.Printf("Sum = %f", float32(float32(node.Resources.AvailableMemMB) + float32(node.FreeableMemory(r.Fun))))
+	log.Printf("Frac = %f", float32(float32(node.Resources.AvailableMemMB) + float32(node.FreeableMemory(r.Fun))) / float32(node.Resources.MaxMemMB))
+	log.Printf("Sum = %f", float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)))
+	log.Printf("Frac = %f", float32(float32(node.Resources.AvailableMemMB) + float32(node.FreeableMemory(r.Fun))) / float32(node.Resources.MaxMemMB))
 	log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
 
 	canExecuteOnEdge := float32(1.0)
@@ -240,6 +242,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 		MaxMemMB:		float32(node.Resources.MaxMemMB),
         AvailableMemMB: float32(node.Resources.AvailableMemMB),
         FreeableMemory: node.FreeableMemory(r.Fun),
+        percAvailableLocalMemory: float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB),
         State:        	state,
         ActionFilter: 	actionFilter,
         Action:       	action,
@@ -268,6 +271,7 @@ type StateActionTuple struct {
 	MaxMemMB		float32
 	AvailableMemMB	float32
 	FreeableMemory	int64
+	percAvailableLocalMemory float32
     State        	State
     ActionFilter 	[]bool
     Action       	int
