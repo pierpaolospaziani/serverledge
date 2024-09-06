@@ -233,8 +233,8 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
     filePath := "state_action.json"
 
 	tuple := StateActionTuple{
-		MaxMemMB:		node.Resources.MaxMemMB,
-        AvailableMemMB: node.Resources.AvailableMemMB,
+		MaxMemMB:		float32(node.Resources.MaxMemMB),
+        AvailableMemMB: float32(node.Resources.AvailableMemMB),
         FreeableMemory: node.FreeableMemory(r.Fun),
         State:        	state,
         ActionFilter: 	actionFilter,
@@ -261,8 +261,8 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 // ------------------------------------------------------------------------
 
 type StateActionTuple struct {
-	MaxMemMB		int64
-	AvailableMemMB	int64
+	MaxMemMB		float32
+	AvailableMemMB	float32
 	FreeableMemory	int64
     State        	State
     ActionFilter 	[]bool
