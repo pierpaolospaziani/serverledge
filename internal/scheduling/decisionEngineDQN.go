@@ -9,6 +9,11 @@ import (
 
 	"github.com/grussorusso/serverledge/internal/node"
 	"github.com/grussorusso/serverledge/internal/config"
+
+	"encoding/json"
+    "fmt"
+    "os"
+    "sync"
 )
 
 type decisionEngineDQN struct {
@@ -224,6 +229,23 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action)
 	// log.Println("[DE_DQN] Action =", action)
 
+	// ------------------------------------------------------------------------
+    filePath := "state_action.json"
+
+	tuple := StateActionTuple{
+		MaxMemMB:		node.Resources.MaxMemMB,
+        AvailableMemMB: node.Resources.AvailableMemMB,
+        FreeableMemory: node.FreeableMemory(r.Fun),
+        State:        	state,
+        ActionFilter: 	actionFilter,
+        Action:       	action,
+    }
+
+	if err := saveStateActionToFile(tuple, filePath, &mutex); err != nil {
+        fmt.Println("Errore nel salvare la tupla:", err)
+    }
+	// ------------------------------------------------------------------------
+
     // map simulator action to Serverledge
     //  - simulator:   LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
     //  - Serverledge: DROP(0)-LOCAL(1)-CLOUD(2)-EDGE(3)
@@ -234,6 +256,45 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	}
 	return action
 }
+
+
+// ------------------------------------------------------------------------
+
+type StateActionTuple struct {
+	MaxMemMB		int64
+	AvailableMemMB	int64
+	FreeableMemory	int64
+    State        	State
+    ActionFilter 	[]bool
+    Action       	int
+}
+
+var mutex sync.Mutex
+
+func saveStateActionToFile(tuple StateActionTuple, filePath string, mutex *sync.Mutex) error {
+    // Converti la struttura in JSON
+    jsonData, err := json.Marshal(tuple)
+    if err != nil {
+        return err
+    }
+    // Aggiungi una nuova linea al JSON per separare le tuple
+    jsonData = append(jsonData, '\n')
+    // Blocca il mutex per evitare condizioni di corsa
+    mutex.Lock()
+    defer mutex.Unlock()
+    // Apri il file in modalità append
+    file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+    // Scrivi i dati JSON nel file
+    if _, err := file.Write(jsonData); err != nil {
+        return err
+    }
+    return nil
+}
+// ------------------------------------------------------------------------
 
 
 func (d *decisionEngineDQN) InitDecisionEngine() {
