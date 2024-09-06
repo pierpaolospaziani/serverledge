@@ -135,6 +135,8 @@ func oneHotEncoding(list []string, str string) []float32 {
 
 
 func getState(r *scheduledRequest) State {
+	log.Println(r.Fun.Name, r.ClassService.Name)
+	log.Println(node.WarmStatus())
 	percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
 	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
 	log.Printf("FreeableMemory = %f", float32(node.FreeableMemory(r.Fun)))
@@ -232,7 +234,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	    }
     }
 
-	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action)
+	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action,"\n")
 	// log.Println("[DE_DQN] Action =", action)
 
 	// ------------------------------------------------------------------------
