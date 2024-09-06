@@ -3,7 +3,6 @@ package scheduling
 import (
 	"log"
 	"sort"
-    "sync"
 
     // tg "github.com/galeone/tfgo"
 	tf "github.com/galeone/tensorflow/tensorflow/go"
@@ -11,9 +10,10 @@ import (
 	"github.com/grussorusso/serverledge/internal/node"
 	"github.com/grussorusso/serverledge/internal/config"
 
-	// "encoding/json"
-    // "fmt"
-    // "os"
+	"encoding/json"
+    "fmt"
+    "os"
+    "sync"
 )
 
 type decisionEngineDQN struct {
@@ -206,13 +206,12 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 		CONTROLLARE SE E' CORRETTO FreeableMemory
 	*/
 	stateMutex.Lock()
+	defer stateMutex.Unlock()
 	// retrieve state and the possible best edge node to offload to
 	state := getState(r)
 
 	// boolean list of allowed actions
 	actionFilter := actionFilter(state, r)
-
-	stateMutex.Unlock()
 
 	// check how many actions can be taken
 	numActionsAllowed := 0
@@ -233,26 +232,25 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	    }
     }
 
-	log.Println("[DE_DQN] State:",state)
 	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action)
 	// log.Println("[DE_DQN] Action =", action)
 
 	// ------------------------------------------------------------------------
-    // filePath := "state_action.json"
+    filePath := "state_action.json"
 
-	// tuple := StateActionTuple{
-	// 	MaxMemMB:		float32(node.Resources.MaxMemMB),
-    //     AvailableMemMB: float32(node.Resources.AvailableMemMB),
-    //     FreeableMemory: node.FreeableMemory(r.Fun),
-    //     Perc: float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB),
-    //     State:        	state,
-    //     ActionFilter: 	actionFilter,
-    //     Action:       	action,
-    // }
+	tuple := StateActionTuple{
+		MaxMemMB:		float32(node.Resources.MaxMemMB),
+        AvailableMemMB: float32(node.Resources.AvailableMemMB),
+        FreeableMemory: node.FreeableMemory(r.Fun),
+        Perc: float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB),
+        State:        	state,
+        ActionFilter: 	actionFilter,
+        Action:       	action,
+    }
 
-	// if err := saveStateActionToFile(tuple, filePath, &mutex); err != nil {
-    //     fmt.Println("Errore nel salvare la tupla:", err)
-    // }
+	if err := saveStateActionToFile(tuple, filePath, &mutex); err != nil {
+        fmt.Println("Errore nel salvare la tupla:", err)
+    }
 	// ------------------------------------------------------------------------
 
     // map simulator action to Serverledge
@@ -267,43 +265,43 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 }
 
 
-// // ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 
-// type StateActionTuple struct {
-// 	MaxMemMB		float32
-// 	AvailableMemMB	float32
-// 	FreeableMemory	int64
-// 	Perc float32
-//     State        	State
-//     ActionFilter 	[]bool
-//     Action       	int
-// }
+type StateActionTuple struct {
+	MaxMemMB		float32
+	AvailableMemMB	float32
+	FreeableMemory	int64
+	Perc float32
+    State        	State
+    ActionFilter 	[]bool
+    Action       	int
+}
 
-// var mutex sync.Mutex
+var mutex sync.Mutex
 
-// func saveStateActionToFile(tuple StateActionTuple, filePath string, mutex *sync.Mutex) error {
-//     // Converti la struttura in JSON
-//     jsonData, err := json.Marshal(tuple)
-//     if err != nil {
-//         return err
-//     }
-//     // Aggiungi una nuova linea al JSON per separare le tuple
-//     jsonData = append(jsonData, '\n')
-//     // Blocca il mutex per evitare condizioni di corsa
-//     mutex.Lock()
-//     defer mutex.Unlock()
-//     // Apri il file in modalità append
-//     file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-//     if err != nil {
-//         return err
-//     }
-//     defer file.Close()
-//     // Scrivi i dati JSON nel file
-//     if _, err := file.Write(jsonData); err != nil {
-//         return err
-//     }
-//     return nil
-// }
+func saveStateActionToFile(tuple StateActionTuple, filePath string, mutex *sync.Mutex) error {
+    // Converti la struttura in JSON
+    jsonData, err := json.Marshal(tuple)
+    if err != nil {
+        return err
+    }
+    // Aggiungi una nuova linea al JSON per separare le tuple
+    jsonData = append(jsonData, '\n')
+    // Blocca il mutex per evitare condizioni di corsa
+    mutex.Lock()
+    defer mutex.Unlock()
+    // Apri il file in modalità append
+    file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+    // Scrivi i dati JSON nel file
+    if _, err := file.Write(jsonData); err != nil {
+        return err
+    }
+    return nil
+}
 // ------------------------------------------------------------------------
 
 
