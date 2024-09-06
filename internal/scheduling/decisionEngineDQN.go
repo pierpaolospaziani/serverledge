@@ -134,7 +134,11 @@ func oneHotEncoding(list []string, str string) []float32 {
 
 func getState(r *scheduledRequest) State {
 	percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
-	// log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
+	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
+	log.Printf("FreeableMemory = %f", float32(node.FreeableMemory(r.Fun)))
+	log.Printf("Sum = %f", float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)))
+	log.Printf("Sum = %f", float32(float32(node.Resources.AvailableMemMB) + float32(node.FreeableMemory(r.Fun))))
+	log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
 
 	canExecuteOnEdge := float32(1.0)
 	url := pickEdgeNodeForOffloading(r)
