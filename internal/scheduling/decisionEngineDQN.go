@@ -164,7 +164,7 @@ func getState(r *scheduledRequest) State {
     //     classList = append(classList, key)
     // }
 	// sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
-	classList := []string{"standard", "critical-1", "critical-2", "batch"}
+	classList := []string{"default", "critical-1", "critical-2", "batch"}
 	classId := oneHotEncoding(classList, r.ClassService.Name)
 	log.Printf("classId = %v -> %v", classList, classId)
 
