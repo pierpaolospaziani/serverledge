@@ -8,8 +8,25 @@ PORT = 1323
 
 file_path = "arrivi.json"
 
-def execute_after_delay(delay, value):
+def invoke_function(function_name, param, class_name):
+    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{param}\""
+    os.system(command)
+
+with open(file_path, "r") as f:
+    data = json.load(f)
+
+threads = []
+prev_key = None
+for key, value in data.items():
+    if prev_key == None:
+        delay = float(key)
+    else:
+        delay = float(key) - prev_key
+    prev_key = float(key)
     time.sleep(delay)
+
+    print(key, value)
+
     f = value[0]
     c = value[1]
 
@@ -24,16 +41,7 @@ def execute_after_delay(delay, value):
     else:
         param = 8500
 
-    command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {f} -c \"{c}\" -p \"n:{param}\""
-    os.system(command)
-
-with open(file_path, "r") as f:
-    data = json.load(f)
-
-threads = []
-for key, value in data.items():
-    delay = float(key)
-    thread = threading.Thread(target=execute_after_delay, args=(delay, value))
+    thread = threading.Thread(target=invoke_function, args=(f, param, c))
     threads.append(thread)
     thread.start()
 
