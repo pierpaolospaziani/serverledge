@@ -135,18 +135,17 @@ func oneHotEncoding(list []string, str string) []float32 {
 
 
 func getState(r *scheduledRequest) State {
-	log.Println(r.Fun.Name, r.ClassService.Name)
-	log.Println(node.WarmStatus())
-	// percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
+	log.Println("\n[DE_DQN]",r.Fun.Name, r.ClassService.Name)
+	log.Println("[DE_DQN]",node.WarmStatus())
 	percAvailableLocalMemory := float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB)
-	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
-	log.Printf("BusyMemMB = %f", float32(node.Resources.BusyMemMB))
-	log.Printf("MaxMemMB = %f", float32(node.Resources.MaxMemMB))
-	log.Printf("WarmMemory = %f", float32(node.CountWarmMemory()))
+	log.Printf("[DE_DQN] AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
+	log.Printf("[DE_DQN] BusyMemMB = %f", float32(node.Resources.BusyMemMB))
+	log.Printf("[DE_DQN] MaxMemMB = %f", float32(node.Resources.MaxMemMB))
+	log.Printf("[DE_DQN] WarmMemory = %f", float32(node.CountWarmMemory()))
 	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB + node.CountWarmMemory(){
 		panic("IL CONTO NON TORNA!")
 	}
-	log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
+	log.Printf("[DE_DQN] percAvailableLocalMemory = %f", percAvailableLocalMemory)
 
 	canExecuteOnEdge := float32(1.0)
 	url := pickEdgeNodeForOffloading(r)
@@ -163,7 +162,7 @@ func getState(r *scheduledRequest) State {
 	}
 	sort.Strings(functions)	// need to sort cause Go mixes maps and NN needs functionId in order
 	functionId := oneHotEncoding(functions, r.Fun.Name)
-	// log.Printf("functionId = %v -> %v", functions, functionId)
+	// log.Printf("[DE_DQN] functionId = %v -> %v", functions, functionId)
 
 	classList := make([]string, 0, len(Classes))
     for key := range Classes {
@@ -171,7 +170,7 @@ func getState(r *scheduledRequest) State {
     }
 	sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
 	classId := oneHotEncoding(classList, r.ClassService.Name)
-	log.Printf("classId = %v -> %v", classList, classId)
+	log.Printf("[DE_DQN] classId = %v -> %v", classList, classId)
 
 	state := State{
         PercAvailableLocalMemory: percAvailableLocalMemory,
@@ -240,7 +239,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	    }
     }
 
-	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action,"\n")
+	log.Println("[DE_DQN] Filter:",actionFilter,"-> Action =", action)
 	// log.Println("[DE_DQN] Action =", action)
 
 	// ------------------------------------------------------------------------
