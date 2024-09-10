@@ -103,10 +103,10 @@ func acquireResources(cpuDemand float64, memDemand int64, destroyContainersIfNee
 
 // releaseResources releases the specified amount of cpu and memory.
 // The function is NOT thread-safe.
-func releaseResources(cpuDemand float64, memDemand int64) {
+func releaseResources(cpuDemand float64, memDemand int64, memBusy int64) {
 	Resources.AvailableCPUs += cpuDemand
 	Resources.AvailableMemMB += memDemand
-	Resources.BusyMemMB -= memDemand
+	Resources.BusyMemMB -= memBusy
 }
 
 // AcquireWarmContainer acquires a warm container for a given function (if any).
@@ -159,8 +159,7 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	if deleted != nil {
 		fp.putReadyContainer(contID, expTime)
 	}
-
-	releaseResources(f.CPUDemand, 0)
+	releaseResources(f.CPUDemand, 0, f.MemoryMB)
 
 	//log.Printf("Released resources. Now: %v", Resources)
 }
@@ -210,7 +209,7 @@ func NewContainerWithAcquiredResources(fun *function.Function) (container.Contai
 	Resources.Lock()
 	defer Resources.Unlock()
 	if err != nil {
-		releaseResources(fun.CPUDemand, fun.MemoryMB)
+		releaseResources(fun.CPUDemand, fun.MemoryMB, fun.MemoryMB)
 		return "", err
 	}
 
@@ -294,7 +293,7 @@ func DeleteExpiredContainer() {
 				pool.ready.Remove(temp) // remove the expired element
 
 				memory, _ := container.GetMemoryMB(warmed.contID)
-				releaseResources(0, memory)
+				releaseResources(0, memory, memory)
 				container.Destroy(warmed.contID)
 				log.Printf("Released resources. Now: %v", Resources)
 			} else {
