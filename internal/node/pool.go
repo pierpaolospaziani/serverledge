@@ -392,6 +392,20 @@ func WarmStatus() map[string]int {
 	return warmPool
 }
 
+func CountWarmMemory() int64 {
+	Resources.RLock()
+	defer Resources.RUnlock()
+	count := int64(0)
+	for _, pool := range Resources.ContainerPools {
+		for e := pool.ready.Front(); e != nil; e = e.Next() {
+			contID := e.Value.(warmContainer).contID
+			memory, _ := container.GetMemoryMB(contID)
+			count += memory
+	    }
+	}
+	return count
+}
+
 // FreeableMemory returns the amount of memory that can be freed from warm containers
 func FreeableMemory(fun *function.Function) int64 {
 	Resources.RLock()

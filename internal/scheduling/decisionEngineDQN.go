@@ -142,7 +142,8 @@ func getState(r *scheduledRequest) State {
 	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
 	log.Printf("BusyMemMB = %f", float32(node.Resources.BusyMemMB))
 	log.Printf("MaxMemMB = %f", float32(node.Resources.MaxMemMB))
-	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB{
+	log.Printf("WarmMemory = %f", float32(node.CountWarmMemory()))
+	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB + node.CountWarmMemory(){
 		panic("IL CONTO NON TORNA!")
 	}
 	log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
