@@ -249,6 +249,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 		MaxMemMB:		float32(node.Resources.MaxMemMB),
         AvailableMemMB: float32(node.Resources.AvailableMemMB),
         BusyMemMB: 		float32(node.Resources.BusyMemMB),
+        WarmMemory:		float32(node.CountWarmMemory()),
         Perc: 			float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB),
         State:        	state,
         ActionFilter: 	actionFilter,
@@ -278,6 +279,7 @@ type StateActionTuple struct {
 	MaxMemMB		float32
 	AvailableMemMB	float32
 	BusyMemMB		float32
+	WarmMemory		float32
 	Perc 			float32
     State        	State
     ActionFilter 	[]bool
