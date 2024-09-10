@@ -47,6 +47,7 @@ func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 	fp.putBusyContainer(contID)
 	memory, _ := container.GetMemoryMB(contID)
 	Resources.BusyMemMB += memory
+	log.Println("BusyMemMB++ getWarmContainer")
 
 	return contID, true
 }
@@ -97,6 +98,7 @@ func acquireResources(cpuDemand float64, memDemand int64, destroyContainersIfNee
 	Resources.AvailableCPUs -= cpuDemand
 	Resources.AvailableMemMB -= memDemand
 	Resources.BusyMemMB += memDemand
+	log.Println("BusyMemMB++ acquireResources")
 
 	return true
 }
@@ -107,6 +109,7 @@ func releaseResources(cpuDemand float64, memDemand int64, memBusy int64) {
 	Resources.AvailableCPUs += cpuDemand
 	Resources.AvailableMemMB += memDemand
 	Resources.BusyMemMB -= memBusy
+	log.Println("BusyMemMB-- releaseResources")
 }
 
 // AcquireWarmContainer acquires a warm container for a given function (if any).
@@ -159,6 +162,7 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	if deleted != nil {
 		fp.putReadyContainer(contID, expTime)
 	}
+	log.Println("releaseResources ReleaseContainer")
 	releaseResources(f.CPUDemand, 0, f.MemoryMB)
 
 	//log.Printf("Released resources. Now: %v", Resources)
@@ -209,6 +213,7 @@ func NewContainerWithAcquiredResources(fun *function.Function) (container.Contai
 	Resources.Lock()
 	defer Resources.Unlock()
 	if err != nil {
+		log.Println("releaseResources NewContainerWithAcquiredResources")
 		releaseResources(fun.CPUDemand, fun.MemoryMB, fun.MemoryMB)
 		return "", err
 	}
@@ -293,6 +298,7 @@ func DeleteExpiredContainer() {
 				pool.ready.Remove(temp) // remove the expired element
 
 				memory, _ := container.GetMemoryMB(warmed.contID)
+				log.Println("releaseResources DeleteExpiredContainer")
 				releaseResources(0, memory, memory)
 				container.Destroy(warmed.contID)
 				log.Printf("Released resources. Now: %v", Resources)
@@ -376,6 +382,7 @@ func ShutdownAllContainers() {
 			Resources.AvailableMemMB += memory
 			Resources.AvailableCPUs += function.CPUDemand
 			Resources.BusyMemMB -= memory
+			log.Println("BusyMemMB-- ShutdownAllContainers")
 		}
 	}
 }

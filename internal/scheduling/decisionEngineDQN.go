@@ -135,13 +135,14 @@ func oneHotEncoding(list []string, str string) []float32 {
 
 
 func getState(r *scheduledRequest) State {
-	log.Println("\n[DE_DQN]",r.Fun.Name, r.ClassService.Name)
-	log.Println("[DE_DQN]",node.WarmStatus())
+	log.Println("")
+	log.Println("[DE_DQN]",r.Fun.Name, r.ClassService.Name)
+	log.Println("[DE_DQN] Warm pool:",node.WarmStatus())
 	percAvailableLocalMemory := float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB)
 	log.Printf("[DE_DQN] AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
-	log.Printf("[DE_DQN] BusyMemMB = %f", float32(node.Resources.BusyMemMB))
-	log.Printf("[DE_DQN] MaxMemMB = %f", float32(node.Resources.MaxMemMB))
-	log.Printf("[DE_DQN] WarmMemory = %f", float32(node.CountWarmMemory()))
+	log.Printf("[DE_DQN] BusyMemMB      = %f", float32(node.Resources.BusyMemMB))
+	log.Printf("[DE_DQN] WarmMemory     = %f", float32(node.CountWarmMemory()))
+	log.Printf("[DE_DQN] MaxMemMB       = %f", float32(node.Resources.MaxMemMB))
 	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB + node.CountWarmMemory(){
 		panic("IL CONTO NON TORNA!")
 	}
@@ -170,7 +171,7 @@ func getState(r *scheduledRequest) State {
     }
 	sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
 	classId := oneHotEncoding(classList, r.ClassService.Name)
-	log.Printf("[DE_DQN] classId = %v -> %v", classList, classId)
+	// log.Printf("[DE_DQN] classId = %v -> %v", classList, classId)
 
 	state := State{
         PercAvailableLocalMemory: percAvailableLocalMemory,
