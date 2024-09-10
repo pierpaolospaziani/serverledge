@@ -159,12 +159,11 @@ func getState(r *scheduledRequest) State {
 	functionId := oneHotEncoding(functions, r.Fun.Name)
 	// log.Printf("functionId = %v -> %v", functions, functionId)
 
-	// classList := make([]string, 0, len(Classes))
-    // for key := range Classes {
-    //     classList = append(classList, key)
-    // }
-	// sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
-	classList := []string{"default", "critical-1", "critical-2", "batch"}
+	classList := make([]string, 0, len(Classes))
+    for key := range Classes {
+        classList = append(classList, key)
+    }
+	sort.Strings(classList)	// need to sort cause Go mixes maps and NN needs classId in order
 	classId := oneHotEncoding(classList, r.ClassService.Name)
 	log.Printf("classId = %v -> %v", classList, classId)
 
