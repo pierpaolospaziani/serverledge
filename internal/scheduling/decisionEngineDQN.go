@@ -137,9 +137,14 @@ func oneHotEncoding(list []string, str string) []float32 {
 func getState(r *scheduledRequest) State {
 	log.Println(r.Fun.Name, r.ClassService.Name)
 	log.Println(node.WarmStatus())
-	percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
+	// percAvailableLocalMemory := float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB)
+	percAvailableLocalMemory := float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB)
 	log.Printf("AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
-	log.Printf("FreeableMemory = %f", float32(node.FreeableMemory(r.Fun)))
+	log.Printf("BusyMemMB = %f", float32(node.Resources.BusyMemMB))
+	log.Printf("MaxMemMB = %f", float32(node.Resources.MaxMemMB))
+	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB{
+		panic("IL CONTO NON TORNA!")
+	}
 	log.Printf("percAvailableLocalMemory = %f", percAvailableLocalMemory)
 
 	canExecuteOnEdge := float32(1.0)
@@ -243,8 +248,8 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 	tuple := StateActionTuple{
 		MaxMemMB:		float32(node.Resources.MaxMemMB),
         AvailableMemMB: float32(node.Resources.AvailableMemMB),
-        FreeableMemory: node.FreeableMemory(r.Fun),
-        Perc: float32(node.Resources.AvailableMemMB + node.FreeableMemory(r.Fun)) / float32(node.Resources.MaxMemMB),
+        BusyMemMB: 		float32(node.Resources.BusyMemMB),
+        Perc: 			float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB),
         State:        	state,
         ActionFilter: 	actionFilter,
         Action:       	action,
@@ -272,7 +277,7 @@ func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
 type StateActionTuple struct {
 	MaxMemMB		float32
 	AvailableMemMB	float32
-	FreeableMemory	int64
+	BusyMemMB		float32
 	Perc 			float32
     State        	State
     ActionFilter 	[]bool

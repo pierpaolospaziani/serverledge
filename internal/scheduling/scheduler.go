@@ -34,6 +34,7 @@ func Run(p Policy) {
 	// initialize Resources resources
 	availableCores := runtime.NumCPU()
 	node.Resources.AvailableMemMB = int64(config.GetInt(config.POOL_MEMORY_MB, 1024))
+	node.Resources.BusyMemMB = 0
 	node.Resources.AvailableCPUs = config.GetFloat(config.POOL_CPUS, float64(availableCores))
 	node.Resources.MaxMemMB = node.Resources.AvailableMemMB
 	node.Resources.MaxCPUs = node.Resources.AvailableCPUs

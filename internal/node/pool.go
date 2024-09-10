@@ -51,6 +51,8 @@ func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 
 func (fp *ContainerPool) putBusyContainer(contID container.ContainerID) {
 	fp.busy.PushBack(contID)
+	memory, _ := container.GetMemoryMB(contID)
+	Resources.BusyMemMB += memory
 }
 
 func (fp *ContainerPool) putReadyContainer(contID container.ContainerID, expiration int64) {
@@ -94,6 +96,7 @@ func acquireResources(cpuDemand float64, memDemand int64, destroyContainersIfNee
 
 	Resources.AvailableCPUs -= cpuDemand
 	Resources.AvailableMemMB -= memDemand
+	Resources.BusyMemMB += memDemand
 
 	return true
 }
@@ -103,6 +106,7 @@ func acquireResources(cpuDemand float64, memDemand int64, destroyContainersIfNee
 func releaseResources(cpuDemand float64, memDemand int64) {
 	Resources.AvailableCPUs += cpuDemand
 	Resources.AvailableMemMB += memDemand
+	Resources.BusyMemMB -= memDemand
 }
 
 // AcquireWarmContainer acquires a warm container for a given function (if any).
@@ -372,6 +376,7 @@ func ShutdownAllContainers() {
 			container.Destroy(contID)
 			Resources.AvailableMemMB += memory
 			Resources.AvailableCPUs += function.CPUDemand
+			Resources.BusyMemMB -= memory
 		}
 	}
 }
