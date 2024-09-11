@@ -28,6 +28,7 @@ var offloadingClient *http.Client
 var policy Policy
 
 var dropMutex sync.Mutex
+var releaseMutex sync.Mutex
 
 func Run(p Policy) {
 	policy = p
@@ -79,7 +80,9 @@ func Run(p Policy) {
 			log.Println("COMPLETED:",c.scheduledRequest)
 			// if is Drop from Offload don't do ReleaseContainer
 			if !c.scheduledRequest.ExecReport.HasBeenDropped {
+				releaseMutex.Lock()
 				node.ReleaseContainer(c.contID, c.Fun)
+				releaseMutex.Unlock()
 			}
 			p.OnCompletion(c.scheduledRequest)
 
