@@ -9,7 +9,6 @@ import (
 
 	"github.com/grussorusso/serverledge/internal/node"
 	"github.com/grussorusso/serverledge/internal/config"
-	"github.com/grussorusso/serverledge/internal/function"
 
 	"encoding/json"
     "fmt"
@@ -210,13 +209,9 @@ func actionFilter(state State, r *scheduledRequest) []bool {
 
 
 func (d *decisionEngineDQN) Decide(r *scheduledRequest) int {
-
-	/*
-		CONTROLLARE SE E' CORRETTO FreeableMemory
-	*/
 	stateMutex.Lock()
 	defer stateMutex.Unlock()
-	// retrieve state and the possible best edge node to offload to
+	// retrieve state
 	state := getState(r)
 
 	// boolean list of allowed actions
