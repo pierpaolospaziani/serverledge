@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"runtime"
 	"time"
-    "sync"
 
 	"github.com/grussorusso/serverledge/internal/metrics"
 	"github.com/grussorusso/serverledge/internal/node"
@@ -20,6 +19,8 @@ import (
 
 var requests chan *scheduledRequest
 var completions chan *completion
+var dropCloud chan *completion
+var dropEdge chan *completion
 
 var remoteServerUrl string
 var executionLogEnabled bool
@@ -27,12 +28,14 @@ var executionLogEnabled bool
 var offloadingClient *http.Client
 var policy Policy
 
-var dropMutex sync.Mutex
+// var dropMutex sync.Mutex
 
 func Run(p Policy) {
 	policy = p
 	requests = make(chan *scheduledRequest, 500)
 	completions = make(chan *completion, 500)
+	dropCloud = make(chan *completion, 500)
+	dropEdge = make(chan *completion, 500)
 
 	// initialize Resources resources
 	availableCores := runtime.NumCPU()
@@ -66,6 +69,8 @@ func Run(p Policy) {
 
 	var r *scheduledRequest
 	var c *completion
+	var dC *completion
+	var dE *completion
 	for {
 		select {
 		case r = <-requests:
@@ -90,6 +95,16 @@ func Run(p Policy) {
 					addCompletedMetrics(r)
 				}
 			}
+		case dC = <-dropCloud:
+			dC.scheduledRequest.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
+			dC.scheduledRequest.ExecReport.HasBeenDropped = true
+			log.Println("COMPLETED:",dC.scheduledRequest, "HasBeenDropped:",dC.scheduledRequest.ExecReport.HasBeenDropped)
+			p.OnCompletion(dC.scheduledRequest)
+		case dE = <-dropEdge:
+			dE.scheduledRequest.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
+			dE.scheduledRequest.ExecReport.HasBeenDropped = true
+			log.Println("COMPLETED:",dE.scheduledRequest, "HasBeenDropped:",dE.scheduledRequest.ExecReport.HasBeenDropped)
+			p.OnCompletion(dE.scheduledRequest)
 		}
 	}
 
@@ -130,15 +145,17 @@ func SubmitRequest(r *function.Request) error {
 			_, isDQN := policy.(*DQNPolicy)
 			_, isProbabilistic := policy.(*ProbabilisticPolicy)
 			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
-				dropMutex.Lock()
+				// dropMutex.Lock()
 				if checkIfCloudOffloading(schedDecision.remoteHost) {
-					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
+					// r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
+					dropCloud <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 				} else {
-					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
+					// r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
+					dropEdge <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 				}
-				r.ExecReport.HasBeenDropped = true
-				dropMutex.Unlock()
-				completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
+				// r.ExecReport.HasBeenDropped = true
+				// dropMutex.Unlock()
+				// completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 			}
 			return err
 		}
