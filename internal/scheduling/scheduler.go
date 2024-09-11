@@ -28,7 +28,6 @@ var offloadingClient *http.Client
 var policy Policy
 
 var dropMutex sync.Mutex
-var releaseMutex sync.Mutex
 
 func Run(p Policy) {
 	policy = p
@@ -77,12 +76,10 @@ func Run(p Policy) {
 
 			go p.OnArrival(r)
 		case c = <-completions:
-			log.Println("COMPLETED:",c.scheduledRequest)
+			log.Println("COMPLETED:",c.scheduledRequest, "HasBeenDropped:",c.scheduledRequest.ExecReport.HasBeenDropped)
 			// if is Drop from Offload don't do ReleaseContainer
 			if !c.scheduledRequest.ExecReport.HasBeenDropped {
-				releaseMutex.Lock()
 				node.ReleaseContainer(c.contID, c.Fun)
-				releaseMutex.Unlock()
 			}
 			p.OnCompletion(c.scheduledRequest)
 
@@ -130,17 +127,17 @@ func SubmitRequest(r *function.Request) error {
 		// FIXME AUDIT log.Printf("Offloading request")
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
-			dropMutex.Lock()
-			defer dropMutex.Unlock()
 			_, isDQN := policy.(*DQNPolicy)
 			_, isProbabilistic := policy.(*ProbabilisticPolicy)
 			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
+				dropMutex.Lock()
 				if checkIfCloudOffloading(schedDecision.remoteHost) {
 					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_CLOUD
 				} else {
 					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
 				}
 				r.ExecReport.HasBeenDropped = true
+				dropMutex.Unlock()
 				completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 			}
 			return err
