@@ -20,7 +20,6 @@ import (
 
 var requests chan *scheduledRequest
 var completions chan *completion
-var dropOffload chan *completion
 
 var remoteServerUrl string
 var executionLogEnabled bool
@@ -28,14 +27,12 @@ var executionLogEnabled bool
 var offloadingClient *http.Client
 var policy Policy
 
-var schedMutex sync.Mutex
-
+var dropMutex sync.Mutex
 
 func Run(p Policy) {
 	policy = p
 	requests = make(chan *scheduledRequest, 500)
 	completions = make(chan *completion, 500)
-	dropOffload = make(chan *completion, 500)
 
 	// initialize Resources resources
 	availableCores := runtime.NumCPU()
@@ -69,7 +66,6 @@ func Run(p Policy) {
 
 	var r *scheduledRequest
 	var c *completion
-	var d *completion
 	for {
 		select {
 		case r = <-requests:
@@ -80,6 +76,7 @@ func Run(p Policy) {
 
 			go p.OnArrival(r)
 		case c = <-completions:
+			log.Println("COMPLETED:",c.scheduledRequest)
 			// if is Drop from Offload don't do ReleaseContainer
 			if !c.scheduledRequest.ExecReport.HasBeenDropped {
 				node.ReleaseContainer(c.contID, c.Fun)
@@ -93,9 +90,6 @@ func Run(p Policy) {
 					addCompletedMetrics(r)
 				}
 			}
-		case d = <-dropOffload:
-			r.ExecReport.HasBeenDropped = true
-			p.OnCompletion(d.scheduledRequest)
 		}
 	}
 
@@ -125,8 +119,6 @@ func SubmitRequest(r *function.Request) error {
 	}
 	// FIXME AUDIT log.Printf("[%s] Scheduling decision: %v", r, schedDecision)
 
-	schedMutex.Lock()
-	defer schedMutex.Unlock()
 	var err error
 	if schedDecision.action == DROP {
 		// FIXME AUDIT log.Printf("[%s] Dropping request", r)
@@ -135,6 +127,8 @@ func SubmitRequest(r *function.Request) error {
 		// FIXME AUDIT log.Printf("Offloading request")
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
+			dropMutex.Lock()
+			defer dropMutex.Unlock()
 			_, isDQN := policy.(*DQNPolicy)
 			_, isProbabilistic := policy.(*ProbabilisticPolicy)
 			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
@@ -143,7 +137,8 @@ func SubmitRequest(r *function.Request) error {
 				} else {
 					r.ExecReport.SchedAction = SCHED_ACTION_OFFLOAD_EDGE
 				}
-				dropOffload <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
+				r.ExecReport.HasBeenDropped = true
+				completions <- &completion{scheduledRequest: &scheduledRequest{Request: r}}
 			}
 			return err
 		}
