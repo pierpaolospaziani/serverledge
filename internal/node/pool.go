@@ -137,6 +137,7 @@ func AcquireWarmContainer(f *function.Function) (container.ContainerID, error) {
 
 // ReleaseContainer puts a container in the ready pool for a function.
 func ReleaseContainer(contID container.ContainerID, f *function.Function) {
+	log.Println("ReleaseContainer:", contID)
 	// setup Expiration as time duration from now
 	d := time.Duration(config.GetInt(config.CONTAINER_EXPIRATION_TIME, 600)) * time.Second
 	expTime := time.Now().Add(d).UnixNano()
@@ -145,6 +146,8 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	defer Resources.Unlock()
 
 	fp := getFunctionPool(f)
+
+	log.Println("Busy pool:", BusyStatus())
 
 	// we must update the busy list by removing this element
 	var deleted interface{}
@@ -156,12 +159,18 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 		}
 		elem = elem.Next()
 	}
+
+	log.Println("Busy pool:", BusyStatus())
+	log.Println("deleted:", deleted)
+	log.Println("Warm pool:", WarmStatus())
+
 	if deleted != nil {
 		fp.putReadyContainer(contID, expTime)
 	}
+	log.Println("Warm pool:", WarmStatus())
 	releaseResources(f.CPUDemand, 0, f.MemoryMB)
 
-	//log.Printf("Released resources. Now: %v", Resources)
+	log.Printf("Released resources. Now: %v", Resources)
 }
 
 // NewContainer creates and starts a new container for the given function.
