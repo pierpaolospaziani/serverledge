@@ -9,6 +9,7 @@ import (
 
 	"github.com/grussorusso/serverledge/internal/node"
 	"github.com/grussorusso/serverledge/internal/config"
+	"github.com/grussorusso/serverledge/internal/function"
 
 	"encoding/json"
     "fmt"
@@ -138,6 +139,13 @@ func getState(r *scheduledRequest) State {
 	log.Println("")
 	log.Println("[DE_DQN]",r.Fun.Name, r.ClassService.Name)
 	log.Println("[DE_DQN] Warm pool:",node.WarmStatus())
+	busyMap := node.BusyStatus()
+	countBusyMem := int64(0)
+	for f, howMany := range busyMap {
+		mem, _ := function.GetFunction(f)
+		countBusyMem += mem.MemoryMB * int64(howMany)
+	}
+	log.Println("[DE_DQN] Busy pool:",busyMap, "->", countBusyMem)
 	percAvailableLocalMemory := float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB)
 	log.Printf("[DE_DQN] AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
 	log.Printf("[DE_DQN] BusyMemMB      = %f", float32(node.Resources.BusyMemMB))
@@ -145,6 +153,9 @@ func getState(r *scheduledRequest) State {
 	log.Printf("[DE_DQN] MaxMemMB       = %f", float32(node.Resources.MaxMemMB))
 	if node.Resources.MaxMemMB != node.Resources.AvailableMemMB + node.Resources.BusyMemMB + node.CountWarmMemory(){
 		panic("IL CONTO NON TORNA!")
+	}
+	if countBusyMem != node.Resources.BusyMemMB {
+		panic("BUSY_MEM NON TORNA!")
 	}
 	log.Printf("[DE_DQN] percAvailableLocalMemory = %f", percAvailableLocalMemory)
 

@@ -387,7 +387,7 @@ func ShutdownAllContainers() {
 	}
 }
 
-// WarmStatus foreach function returns the corresponding number of warm container available
+// WarmStatus foreach function returns the corresponding number of warm containers available
 func WarmStatus() map[string]int {
 	Resources.RLock()
 	defer Resources.RUnlock()
@@ -395,7 +395,17 @@ func WarmStatus() map[string]int {
 	for funcName, pool := range Resources.ContainerPools {
 		warmPool[funcName] = pool.ready.Len()
 	}
+	return warmPool
+}
 
+// BusyStatus foreach function returns the corresponding number of busy containers
+func BusyStatus() map[string]int {
+	Resources.RLock()
+	defer Resources.RUnlock()
+	warmPool := make(map[string]int)
+	for funcName, pool := range Resources.ContainerPools {
+		warmPool[funcName] = pool.busy.Len()
+	}
 	return warmPool
 }
 
