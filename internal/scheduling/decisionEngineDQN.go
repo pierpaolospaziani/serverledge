@@ -138,6 +138,7 @@ func getState(r *scheduledRequest) State {
 	log.Println("")
 	log.Println("[DE_DQN]",r.Fun.Name, r.ClassService.Name)
 	log.Println("[DE_DQN] Warm pool:",node.WarmStatus())
+	log.Println("[DE_DQN] Busy pool:",node.BusyStatus())
 	percAvailableLocalMemory := float32(node.Resources.MaxMemMB - node.Resources.BusyMemMB) / float32(node.Resources.MaxMemMB)
 	log.Printf("[DE_DQN] AvailableMemMB = %f", float32(node.Resources.AvailableMemMB))
 	log.Printf("[DE_DQN] BusyMemMB      = %f", float32(node.Resources.BusyMemMB))
