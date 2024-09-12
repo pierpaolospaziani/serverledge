@@ -25,17 +25,32 @@ type warmContainer struct {
 
 var NoWarmFoundErr = errors.New("no warm container is available")
 
-var busyMutex sync.Mutex
+var resourcesMutex sync.RWMutex
 
 // getFunctionPool retrieves (or creates) the container pool for a function.
 func getFunctionPool(f *function.Function) *ContainerPool {
-	if fp, ok := Resources.ContainerPools[f.Name]; ok {
-		return fp
-	}
+	// if fp, ok := Resources.ContainerPools[f.Name]; ok {
+	// 	return fp
+	// }
 
-	fp := newFunctionPool(f)
-	Resources.ContainerPools[f.Name] = fp
-	return fp
+	// fp := newFunctionPool(f)
+	// Resources.ContainerPools[f.Name] = fp
+	// return fp
+	resourcesMutex.RLock()
+    if fp, ok := Resources.ContainerPools[f.Name]; ok {
+        resourcesMutex.RUnlock()
+        return fp
+    }
+    resourcesMutex.RUnlock()
+
+    resourcesMutex.Lock()
+    defer resourcesMutex.Unlock()
+    if fp, ok := Resources.ContainerPools[f.Name]; ok {
+        return fp
+    }
+    fp := newFunctionPool(f)
+    Resources.ContainerPools[f.Name] = fp
+    return fp
 }
 
 func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
@@ -55,8 +70,6 @@ func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 }
 
 func (fp *ContainerPool) putBusyContainer(contID container.ContainerID) {
-	busyMutex.Lock()
-	defer busyMutex.Unlock()
 	fp.busy.PushBack(contID)
 }
 
@@ -151,9 +164,6 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	// setup Expiration as time duration from now
 	d := time.Duration(config.GetInt(config.CONTAINER_EXPIRATION_TIME, 600)) * time.Second
 	expTime := time.Now().Add(d).UnixNano()
-
-	busyMutex.Lock()
-	defer busyMutex.Unlock()
 
 	Resources.Lock()
 	defer Resources.Unlock()
@@ -370,10 +380,7 @@ func ShutdownWarmContainersFor(f *function.Function) {
 }
 
 // ShutdownAllContainers destroys all container (usually on termination)
-func ShutdownAllContainers() {	
-	busyMutex.Lock()
-	defer busyMutex.Unlock()
-
+func ShutdownAllContainers() {
 	Resources.Lock()
 	defer Resources.Unlock()
 
