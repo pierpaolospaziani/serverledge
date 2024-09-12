@@ -124,18 +124,20 @@ func SubmitRequest(r *function.Request) error {
 			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
 				var action string
 				if schedDecision.action == EXEC_REMOTE {
-				    action = SCHED_ACTION_OFFLOAD_CLOUD
+					action = SCHED_ACTION_OFFLOAD_CLOUD
 				} else {
-				    action = SCHED_ACTION_OFFLOAD_EDGE
+					action = SCHED_ACTION_OFFLOAD_EDGE
 				}
+				// need for drop after offload stats
 				dropReq := &function.Request{
-				    ExecReport: function.ExecutionReport{
-				        HasBeenDropped: true,
-				        SchedAction: action,
-				    },
-				    RequestQoS: function.RequestQoS{
-				        ClassService: r.RequestQoS.ClassService,
-				    },
+					Arrival: r.Arrival,
+					ExecReport: function.ExecutionReport{
+						HasBeenDropped: true,
+						SchedAction: action,
+					},
+					RequestQoS: function.RequestQoS{
+						ClassService: r.RequestQoS.ClassService,
+					},
 				}
 				policy.OnCompletion(&scheduledRequest{Request: dropReq})
 			}

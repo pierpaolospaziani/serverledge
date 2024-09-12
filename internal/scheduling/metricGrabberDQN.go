@@ -164,7 +164,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 		dropped = true
 	}
 	outOfTime := false
-	if r.ExecReport.ResponseTime > r.ClassService.MaximumResponseTime {
+	if !dropped && r.ExecReport.ResponseTime > r.ClassService.MaximumResponseTime {
 		outOfTime = true
 	}
 
