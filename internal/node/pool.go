@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"sync"
 
 	"github.com/grussorusso/serverledge/internal/config"
 	"github.com/grussorusso/serverledge/internal/container"
@@ -23,6 +24,8 @@ type warmContainer struct {
 }
 
 var NoWarmFoundErr = errors.New("no warm container is available")
+
+var busyMutex sync.Mutex
 
 // getFunctionPool retrieves (or creates) the container pool for a function.
 func getFunctionPool(f *function.Function) *ContainerPool {
@@ -52,6 +55,8 @@ func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 }
 
 func (fp *ContainerPool) putBusyContainer(contID container.ContainerID) {
+	busyMutex.Lock()
+	defer busyMutex.Unlock()
 	fp.busy.PushBack(contID)
 }
 
@@ -147,6 +152,9 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	d := time.Duration(config.GetInt(config.CONTAINER_EXPIRATION_TIME, 600)) * time.Second
 	expTime := time.Now().Add(d).UnixNano()
 
+	busyMutex.Lock()
+	defer busyMutex.Unlock()
+
 	Resources.Lock()
 	defer Resources.Unlock()
 
@@ -176,7 +184,7 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 	log.Printf("releaseResources - ReleaseContainer")
 	releaseResources(f.CPUDemand, 0, f.MemoryMB)
 	if deleted == nil {
-            panic("NIL CONTAINER")
+        panic("NIL CONTAINER")
     }
 	// log.Printf("Released resources. Now: %v", Resources)
 }
@@ -362,7 +370,10 @@ func ShutdownWarmContainersFor(f *function.Function) {
 }
 
 // ShutdownAllContainers destroys all container (usually on termination)
-func ShutdownAllContainers() {
+func ShutdownAllContainers() {	
+	busyMutex.Lock()
+	defer busyMutex.Unlock()
+
 	Resources.Lock()
 	defer Resources.Unlock()
 
