@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"sync"
 
 	"github.com/grussorusso/serverledge/internal/config"
 	"github.com/grussorusso/serverledge/internal/container"
@@ -16,7 +15,6 @@ import (
 type ContainerPool struct {
 	busy  *list.List // list of ContainerID
 	ready *list.List // list of warmContainer
-	poolMutex  sync.Mutex
 }
 
 type warmContainer struct {
@@ -26,7 +24,6 @@ type warmContainer struct {
 
 var NoWarmFoundErr = errors.New("no warm container is available")
 
-// var resourcesMutex sync.RWMutex
 
 // getFunctionPool retrieves (or creates) the container pool for a function.
 func getFunctionPool(f *function.Function) *ContainerPool {
@@ -37,21 +34,6 @@ func getFunctionPool(f *function.Function) *ContainerPool {
 	fp := newFunctionPool(f)
 	Resources.ContainerPools[f.Name] = fp
 	return fp
-	// resourcesMutex.RLock()
-    // if fp, ok := Resources.ContainerPools[f.Name]; ok {
-    //     resourcesMutex.RUnlock()
-    //     return fp
-    // }
-    // resourcesMutex.RUnlock()
-
-    // resourcesMutex.Lock()
-    // defer resourcesMutex.Unlock()
-    // if fp, ok := Resources.ContainerPools[f.Name]; ok {
-    //     return fp
-    // }
-    // fp := newFunctionPool(f)
-    // Resources.ContainerPools[f.Name] = fp
-    // return fp
 }
 
 func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
@@ -171,9 +153,6 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 
 	fp := getFunctionPool(f)
 
-	fp.poolMutex.Lock()
-    defer fp.poolMutex.Unlock()
-
 	log.Println("Busy pool:", BusyStatus())
 
 	// we must update the busy list by removing this element
@@ -193,12 +172,12 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 
 	if deleted != nil {
 		fp.putReadyContainer(contID, expTime)
+		releaseResources(f.CPUDemand, 0, f.MemoryMB)
 	}
 	log.Println("Warm pool:", WarmStatus())
 	log.Printf("releaseResources - ReleaseContainer")
-	releaseResources(f.CPUDemand, 0, f.MemoryMB)
 	if deleted == nil {
-        panic("NIL CONTAINER")
+        log.Println(" ---> NIL CONTAINER:",contID)
     }
 	// log.Printf("Released resources. Now: %v", Resources)
 }
@@ -336,6 +315,7 @@ func DeleteExpiredContainer() {
 				log.Printf("releaseResources - DeleteExpiredContainer")
 				releaseResources(0, memory, 0)
 				container.Destroy(warmed.contID)
+				log.Printf(" ---> EXPIRED:", warmed.contID)
 				log.Printf("Released resources. Now: %v", Resources)
 			} else {
 				elem = elem.Next()
