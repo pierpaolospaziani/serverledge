@@ -56,7 +56,9 @@ func getFunctionPool(f *function.Function) *ContainerPool {
 
 func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 	// TODO: picking most-recent / least-recent container might be better?
-	elem := fp.ready.Front()
+	fp.poolMutex.Lock()
+    defer fp.poolMutex.Unlock()
+    elem := fp.ready.Front()
 	if elem == nil {
 		return "", false
 	}
@@ -71,11 +73,15 @@ func (fp *ContainerPool) getWarmContainer() (container.ContainerID, bool) {
 }
 
 func (fp *ContainerPool) putBusyContainer(contID container.ContainerID) {
+	fp.poolMutex.Lock()
+    defer fp.poolMutex.Unlock()
 	fp.busy.PushBack(contID)
 }
 
 func (fp *ContainerPool) putReadyContainer(contID container.ContainerID, expiration int64) {
-	fp.ready.PushBack(warmContainer{
+	fp.poolMutex.Lock()
+    defer fp.poolMutex.Unlock()
+    fp.ready.PushBack(warmContainer{
 		contID:     contID,
 		Expiration: expiration,
 	})
@@ -276,6 +282,8 @@ func dismissContainer(requiredMemoryMB int64) (bool, error) {
 
 	//first phase, research
 	for _, funPool := range Resources.ContainerPools {
+		funPool.poolMutex.Lock()
+    	defer funPool.poolMutex.Unlock()
 		if funPool.ready.Len() > 0 {
 			// every container into the funPool has the same memory (same function)
 			//so it is not important which one you destroy
@@ -323,6 +331,8 @@ func DeleteExpiredContainer() {
 	defer Resources.Unlock()
 
 	for _, pool := range Resources.ContainerPools {
+		pool.poolMutex.Lock()
+    	defer pool.poolMutex.Unlock()
 		elem := pool.ready.Front()
 		for ok := elem != nil; ok; ok = elem != nil {
 			warmed := elem.Value.(warmContainer)
@@ -355,6 +365,9 @@ func ShutdownWarmContainersFor(f *function.Function) {
 	if !ok {
 		return
 	}
+
+	fp.poolMutex.Lock()
+    defer fp.poolMutex.Unlock()
 
 	containersToDelete := make([]container.ContainerID, 0)
 
@@ -389,6 +402,10 @@ func ShutdownAllContainers() {
 	defer Resources.Unlock()
 
 	for fun, pool := range Resources.ContainerPools {
+
+		pool.poolMutex.Lock()
+	    defer pool.poolMutex.Unlock()
+
 		elem := pool.ready.Front()
 		for ok := elem != nil; ok; ok = elem != nil {
 			warmed := elem.Value.(warmContainer)
@@ -428,6 +445,8 @@ func WarmStatus() map[string]int {
 	// defer Resources.RUnlock()
 	warmPool := make(map[string]int)
 	for funcName, pool := range Resources.ContainerPools {
+		pool.poolMutex.Lock()
+	    defer pool.poolMutex.Unlock()
 		warmPool[funcName] = pool.ready.Len()
 	}
 	return warmPool
@@ -439,6 +458,8 @@ func BusyStatus() map[string]int {
 	// defer Resources.RUnlock()
 	warmPool := make(map[string]int)
 	for funcName, pool := range Resources.ContainerPools {
+		pool.poolMutex.Lock()
+	    defer pool.poolMutex.Unlock()
 		warmPool[funcName] = pool.busy.Len()
 	}
 	return warmPool
