@@ -13,7 +13,7 @@ const HANDLER_DIR = "/app"
 
 // Execute serves a request on the specified container.
 func Execute(contID container.ContainerID, r *scheduledRequest) error {
-	log.Printf("[%s] Executing on container: %v", r, contID)
+	// log.Printf("[%s] Executing on container: %v", r, contID)
 
 	var req executor.InvocationRequest
 	if r.Fun.Runtime == container.CUSTOM_RUNTIME {
@@ -36,14 +36,12 @@ func Execute(contID container.ContainerID, r *scheduledRequest) error {
 	if err != nil {
 		// notify scheduler
 		completions <- &completion{scheduledRequest: r, contID: contID}
-		log.Printf("[%s] Function execution failed: %v", r, contID)
 		return fmt.Errorf("[%s] Execution failed: %v", r, err)
 	}
 
 	if !response.Success {
 		// notify scheduler
 		completions <- &completion{scheduledRequest: r, contID: contID}
-		log.Printf("[%s] Function execution failed: %v", r, contID)
 		return fmt.Errorf("Function execution failed")
 	}
 
@@ -58,7 +56,7 @@ func Execute(contID container.ContainerID, r *scheduledRequest) error {
 
 	// notify scheduler
 	completions <- &completion{scheduledRequest: r, contID: contID}
-	log.Printf("[%s] Execution completed on: %v", r, contID)
+	// log.Printf("[%s] Execution completed on: %v", r, contID)
 
 	return nil
 }
