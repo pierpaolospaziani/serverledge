@@ -6,7 +6,7 @@ import os
 IP = "192.168.122.31"
 PORT = 1323
 
-file_path = "arrivi.json"
+file_path = "dqn_utils/arrivi.json"
 
 def invoke_function(function_name, param, class_name):
     command = f"bin/serverledge-cli invoke -H {IP} -P {PORT} -f {function_name} -c \"{class_name}\" -p \"n:{param}\""
