@@ -3,7 +3,6 @@ package scheduling
 import (
 	"fmt"
 	"time"
-	"log"
 
 	"github.com/grussorusso/serverledge/internal/container"
 	"github.com/grussorusso/serverledge/internal/executor"

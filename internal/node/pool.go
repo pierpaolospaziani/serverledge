@@ -175,7 +175,7 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 		releaseResources(f.CPUDemand, 0, f.MemoryMB)
 	}
 	// log.Println("Warm pool:", WarmStatus())
-	log.Printf("releaseResources - ReleaseContainer")
+	// log.Printf("releaseResources - ReleaseContainer")
 	if deleted == nil {
         log.Println(" ---> NIL CONTAINER:",contID)
     }
