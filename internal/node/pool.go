@@ -105,11 +105,11 @@ func acquireResources(cpuDemand float64, memDemand int64, destroyContainersIfNee
 // releaseResources releases the specified amount of cpu and memory.
 // The function is NOT thread-safe.
 func releaseResources(cpuDemand float64, memDemand int64, memBusy int64) {
-	log.Println("releaseResources from:",Resources.AvailableMemMB,Resources.BusyMemMB, memBusy)
+	// log.Println("releaseResources from:",Resources.AvailableMemMB,Resources.BusyMemMB, memBusy)
 	Resources.AvailableCPUs += cpuDemand
 	Resources.AvailableMemMB += memDemand
 	Resources.BusyMemMB -= memBusy
-	log.Println("releaseResources to  :",Resources.AvailableMemMB,Resources.BusyMemMB)
+	// log.Println("releaseResources to  :",Resources.AvailableMemMB,Resources.BusyMemMB)
 	if Resources.BusyMemMB < 0 {
 		panic("BusyMemMB NEGATIVA")
 	}
@@ -143,7 +143,7 @@ func AcquireWarmContainer(f *function.Function) (container.ContainerID, error) {
 
 // ReleaseContainer puts a container in the ready pool for a function.
 func ReleaseContainer(contID container.ContainerID, f *function.Function) {
-	log.Println("ReleaseContainer:", contID)
+	// log.Println("ReleaseContainer:", contID)
 	// setup Expiration as time duration from now
 	d := time.Duration(config.GetInt(config.CONTAINER_EXPIRATION_TIME, 600)) * time.Second
 	expTime := time.Now().Add(d).UnixNano()
@@ -153,7 +153,7 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 
 	fp := getFunctionPool(f)
 
-	log.Println("Busy pool:", BusyStatus())
+	// log.Println("Busy pool:", BusyStatus())
 
 	// we must update the busy list by removing this element
 	var deleted interface{}
@@ -166,15 +166,15 @@ func ReleaseContainer(contID container.ContainerID, f *function.Function) {
 		elem = elem.Next()
 	}
 
-	log.Println("Busy pool:", BusyStatus())
-	log.Println("deleted:", deleted)
-	log.Println("Warm pool:", WarmStatus())
+	// log.Println("Busy pool:", BusyStatus())
+	// log.Println("deleted:", deleted)
+	// log.Println("Warm pool:", WarmStatus())
 
 	if deleted != nil {
 		fp.putReadyContainer(contID, expTime)
 		releaseResources(f.CPUDemand, 0, f.MemoryMB)
 	}
-	log.Println("Warm pool:", WarmStatus())
+	// log.Println("Warm pool:", WarmStatus())
 	log.Printf("releaseResources - ReleaseContainer")
 	if deleted == nil {
         log.Println(" ---> NIL CONTAINER:",contID)
@@ -315,7 +315,6 @@ func DeleteExpiredContainer() {
 				log.Printf("releaseResources - DeleteExpiredContainer")
 				releaseResources(0, memory, 0)
 				container.Destroy(warmed.contID)
-				log.Printf(" ---> EXPIRED:", warmed.contID)
 				log.Printf("Released resources. Now: %v", Resources)
 			} else {
 				elem = elem.Next()
@@ -397,7 +396,6 @@ func ShutdownAllContainers() {
 			Resources.AvailableMemMB += memory
 			Resources.AvailableCPUs += function.CPUDemand
 			Resources.BusyMemMB -= memory
-			log.Println("BusyMemMB-- ShutdownAllContainers")
 		}
 	}
 }
