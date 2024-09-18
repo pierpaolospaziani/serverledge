@@ -30,7 +30,7 @@ func (p *DefaultLocalPolicy) Init() {
 func (p *DefaultLocalPolicy) OnCompletion(completed *scheduledRequest) {
 	if p.queue == nil {
 		if p.mg != nil{
-			p.mg.addDefaultStats(completed,false)
+			p.mg.addStats(completed,false,false)
 		}
 		return
 	}
@@ -94,7 +94,7 @@ func (p *DefaultLocalPolicy) OnArrival(r *scheduledRequest) {
 		// other error
 		dropRequest(r)
 		if p.mg != nil{
-			p.mg.addDefaultStats(r,true)
+			p.mg.addStats(r,true,false)
 		}
 		return
 	}
@@ -111,6 +111,6 @@ func (p *DefaultLocalPolicy) OnArrival(r *scheduledRequest) {
 
 	dropRequest(r)
 	if p.mg != nil{
-		p.mg.addDefaultStats(r,true)
+		p.mg.addStats(r,true,false)
 	}
 }
