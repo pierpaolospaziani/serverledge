@@ -181,7 +181,7 @@ func createSchedulingPolicy() scheduling.Policy {
 	} else if policyConf == "minR" {
 		return &scheduling.MinRPolicy{}
 	} else if policyConf == "greedy" {
-		return &scheduling.decisionEngineGreedy{}
+		return &scheduling.GreedyPolicy{}
 	} else if policyConf == "DQN" {
 		return &scheduling.DQNPolicy{}
 	} else {

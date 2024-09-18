@@ -18,8 +18,8 @@ var probabilities map[string]map[string][]float64
 var globalRand *rand.Rand
 
 func (d *decisionEngineGreedy) Decide(r *scheduledRequest) int {
-	function := r.Fun.Name
-	class := r.ClassService.Name
+	// function := r.Fun.Name
+	// class := r.ClassService.Name
 
 	// var pL float64
 	// var pC float64

@@ -5,17 +5,17 @@ import (
 	"log"
 )
 
-type ProbabilisticPolicy struct {}
+type GreedyPolicy struct {}
 
 var dEngine decisionEngine
 
-func (p *ProbabilisticPolicy) Init() {
+func (p *GreedyPolicy) Init() {
 	// initialize decision engine
-	dEngine = &decisionEngineProbabilistic{}
+	dEngine = &decisionEngineGreedy{}
 	dEngine.InitDecisionEngine()
 }
 
-func (p *ProbabilisticPolicy) OnCompletion(r *scheduledRequest) {
+func (p *GreedyPolicy) OnCompletion(r *scheduledRequest) {
 	if r.ExecReport.HasBeenDropped {
 		dEngine.Completed(r, 1)
 	} else {
@@ -23,7 +23,7 @@ func (p *ProbabilisticPolicy) OnCompletion(r *scheduledRequest) {
 	}
 }
 
-func (p *ProbabilisticPolicy) OnArrival(r *scheduledRequest) {
+func (p *GreedyPolicy) OnArrival(r *scheduledRequest) {
 	dec := dEngine.Decide(r)
 
 	if dec == LOCAL_EXEC_REQUEST {
