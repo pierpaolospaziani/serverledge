@@ -120,7 +120,7 @@ func SubmitRequest(r *function.Request) error {
 		err = Offload(r, schedDecision.remoteHost)
 		if err != nil {
 			_, isDQN := policy.(*DQNPolicy)
-			_, isProbabilistic := policy.(*GreedyPolicy)
+			_, isProbabilistic := policy.(*ProbabilisticPolicy)
 			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
 				var action string
 				if schedDecision.action == EXEC_REMOTE {

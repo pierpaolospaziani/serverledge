@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-type decisionEngineGreedy struct {
+type decisionEngineProbabilistic struct {
 	mg *metricGrabberDQN
 }
 
@@ -17,7 +17,7 @@ var probabilities map[string]map[string][]float64
 
 var globalRand *rand.Rand
 
-func (d *decisionEngineGreedy) Decide(r *scheduledRequest) int {
+func (d *decisionEngineProbabilistic) Decide(r *scheduledRequest) int {
 	function := r.Fun.Name
 	class := r.ClassService.Name
 
@@ -39,11 +39,6 @@ func (d *decisionEngineGreedy) Decide(r *scheduledRequest) int {
     } else {
         panic("Function not found")
     }
-
-    // pL := float64(1.0)
-	// pC := float64(0.0)
-	// pE := float64(0.0)
-	// pD := float64(0.0)
 
 	if !r.CanDoOffloading {
 		// Can be executed only locally or dropped
@@ -86,9 +81,9 @@ func (d *decisionEngineGreedy) Decide(r *scheduledRequest) int {
 	}
 }
 
-func (d *decisionEngineGreedy) InitDecisionEngine() {
+func (d *decisionEngineProbabilistic) InitDecisionEngine() {
 	// Initializing probabilities
-	probFilePath := "probs.json"
+	probFilePath := "dqn_utils/probs.json"
 
 	file, err := os.Open(probFilePath)
     if err != nil {
@@ -131,12 +126,12 @@ func (d *decisionEngineGreedy) InitDecisionEngine() {
 	d.mg = InitMG()
 }
 
-func (d *decisionEngineGreedy) Completed(r *scheduledRequest, offloaded int) {
-	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineGreedy")
+func (d *decisionEngineProbabilistic) Completed(r *scheduledRequest, offloaded int) {
+	// FIXME AUDIT log.Println("COMPLETED: in decisionEngineProbabilistic")
 	offloadDrop := offloaded != 0
 	d.mg.addStats(r,false,offloadDrop)
 }
 
-func (d *decisionEngineGreedy) GetGrabber() metricGrabber {
+func (d *decisionEngineProbabilistic) GetGrabber() metricGrabber {
 	return nil
 }
