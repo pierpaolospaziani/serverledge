@@ -18,32 +18,32 @@ var probabilities map[string]map[string][]float64
 var globalRand *rand.Rand
 
 func (d *decisionEngineGreedy) Decide(r *scheduledRequest) int {
-	// function := r.Fun.Name
-	// class := r.ClassService.Name
+	function := r.Fun.Name
+	class := r.ClassService.Name
 
-	// var pL float64
-	// var pC float64
-	// var pE float64
-	// var pD float64
+	var pL float64
+	var pC float64
+	var pE float64
+	var pD float64
 
-	// if classes, ok := probabilities[function]; ok {
-    //     if probs, ok := classes[class]; ok {
-    //         log.Printf("Probability for %s - %s: %v\n", function, class, probs)
-	// 		pL = probs[0]
-	// 		pC = probs[1]
-	// 		pE = probs[2]
-	// 		pD = probs[3]
-    //     } else {
-    //         panic("Class not found")
-    //     }
-    // } else {
-    //     panic("Function not found")
-    // }
+	if classes, ok := probabilities[function]; ok {
+        if probs, ok := classes[class]; ok {
+            log.Printf("Probability for %s - %s: %v\n", function, class, probs)
+			pL = probs[0]
+			pC = probs[1]
+			pE = probs[2]
+			pD = probs[3]
+        } else {
+            panic("Class not found")
+        }
+    } else {
+        panic("Function not found")
+    }
 
-    pL := float64(1.0)
-	pC := float64(0.0)
-	pE := float64(0.0)
-	pD := float64(0.0)
+    // pL := float64(1.0)
+	// pC := float64(0.0)
+	// pE := float64(0.0)
+	// pD := float64(0.0)
 
 	if !r.CanDoOffloading {
 		// Can be executed only locally or dropped
