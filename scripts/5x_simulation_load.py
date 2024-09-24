@@ -31,15 +31,15 @@ for key, value in data.items():
     c = value[1]
 
     if f == "f1":
-        param = 20000
+        param = 15000
     elif f == "f2":
-        param = 16000
+        param = 10500
     elif f == "f3":
-        param = 18000
+        param = 13000
     elif f == "f4":
-        param = 17000
+        param = 12700
     else:
-        param = 22500
+        param = 16000
 
     thread = threading.Thread(target=invoke_function, args=(f, param, c))
     threads.append(thread)
