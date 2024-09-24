@@ -180,7 +180,9 @@ func createSchedulingPolicy() scheduling.Policy {
 		}
 	} else if policyConf == "minR" {
 		return &scheduling.MinRPolicy{}
-	} else if policyConf == "Probabilistic" {
+	} else if policyConf == "greedy" {
+		return &scheduling.GreedyPolicy{}
+	} else if policyConf == "probabilistic" {
 		return &scheduling.ProbabilisticPolicy{}
 	} else if policyConf == "DQN" {
 		return &scheduling.DQNPolicy{}

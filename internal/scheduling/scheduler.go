@@ -121,7 +121,8 @@ func SubmitRequest(r *function.Request) error {
 		if err != nil {
 			_, isDQN := policy.(*DQNPolicy)
 			_, isProbabilistic := policy.(*ProbabilisticPolicy)
-			if (isDQN || isProbabilistic) && err == node.OutOfResourcesErr {
+			_, isGreedy := policy.(*GreedyPolicy)
+			if (isDQN || isProbabilistic || isGreedy) && err == node.OutOfResourcesErr {
 				var action string
 				if schedDecision.action == EXEC_REMOTE {
 					action = SCHED_ACTION_OFFLOAD_CLOUD
