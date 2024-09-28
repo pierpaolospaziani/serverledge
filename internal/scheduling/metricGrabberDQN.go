@@ -25,10 +25,10 @@ type ClassPenalties struct {
 }
 
 type DQNStats struct {
-	Exec	[]float64	// list of seconds in which exec append
-	Cloud	[]float64	// list of seconds in which offload cloud append
-	Edge	[]float64	// list of seconds in which offload edge append
-	Drop	[]float64	// list of seconds in which drop append
+	Exec  []float64	// list of seconds in which exec append
+	Cloud []float64	// list of seconds in which offload cloud append
+	Edge  []float64	// list of seconds in which offload edge append
+	Drop  []float64	// list of seconds in which drop append
 
 	Reward 			[]float64	// list of rewards obtained
 	DeadlinePenalty	[]float64	// list of deadline penalties
@@ -37,10 +37,18 @@ type DQNStats struct {
 
 	// counts how many times an action has been taken for that class
 	// LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
-	Standard 	[]int
-	Critical1 	[]int
-	Critical2 	[]int
-	Batch 		[]int
+	Standard  []int
+	Critical1 []int
+	Critical2 []int
+	Batch 	  []int
+
+	// counts how many times an action has been taken for that function
+	// LOCAL(0)-CLOUD(1)-EDGE(2)-DROP(3)
+	f1 []int
+	f2 []int
+	f3 []int
+	f4 []int
+	f5 []int
 
 	// stats for function (f1,f2,f3,f4,f5)
 	ResponseTime 		[][]float64
@@ -60,6 +68,13 @@ type DQNStats struct {
 	UPCritical1 []float64
 	UPCritical2 []float64
 	UPBatch 	[]float64
+
+	// [utility,deadlinePenalty,dropPenalty] per function
+	UPf1 []float64
+	UPf2 []float64
+	UPf3 []float64
+	UPf4 []float64
+	UPf5 []float64
 }
 
 var penaltyMap map[string][]float64
@@ -95,6 +110,11 @@ func EmptyStats() DQNStats{
 	    Critical1: 			 []int{0,0,0,0},
 	    Critical2: 			 []int{0,0,0,0},
 	    Batch:     			 []int{0,0,0,0},
+	    f1:  			 	 []int{0,0,0,0},
+	    f2: 			 	 []int{0,0,0,0},
+	    f3: 			 	 []int{0,0,0,0},
+	    f4:     			 []int{0,0,0,0},
+	    f5:     			 []int{0,0,0,0},
 	    ResponseTime: 		 [][]float64{{},{},{},{},{}},
 		IsWarmStart:		 [][]int{{0,0},{0,0},{0,0},{0,0},{0,0}},
 		InitTime: 			 [][]float64{{},{},{},{},{}},
@@ -108,6 +128,11 @@ func EmptyStats() DQNStats{
 	    UPCritical1:    	 []float64{0,0,0},
 	    UPCritical2: 		 []float64{0,0,0},
 	    UPBatch:	 		 []float64{0,0,0},
+	    UPf1:	      		 []float64{0,0,0},
+	    UPf2:	      	 	 []float64{0,0,0},
+	    UPf3:	    	 	 []float64{0,0,0},
+	    UPf4:	 		 	 []float64{0,0,0},
+	    UPf5:		 		 []float64{0,0,0},
 	}
 	return stats
 }
@@ -209,13 +234,27 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 	// actionDrop (and not dropped) cause i want the chosen action per class, not the outcome of the request 
 	switch r.ClassService.Name {
     case "batch":
-        updateClassStats(&stats.Batch, actionDrop, r.ExecReport.SchedAction)
+        updateActionStats(&stats.Batch, actionDrop, r.ExecReport.SchedAction)
     case "critical-1":
-        updateClassStats(&stats.Critical1, actionDrop, r.ExecReport.SchedAction)
+        updateActionStats(&stats.Critical1, actionDrop, r.ExecReport.SchedAction)
     case "critical-2":
-        updateClassStats(&stats.Critical2, actionDrop, r.ExecReport.SchedAction)
+        updateActionStats(&stats.Critical2, actionDrop, r.ExecReport.SchedAction)
     default:
-        updateClassStats(&stats.Standard, actionDrop, r.ExecReport.SchedAction)
+        updateActionStats(&stats.Standard, actionDrop, r.ExecReport.SchedAction)
+    }
+
+    // actionDrop (and not dropped) cause i want the chosen action per function, not the outcome of the request 
+	switch r.Fun.Name {
+    case "f1":
+        updateActionStats(&stats.f1, actionDrop, r.ExecReport.SchedAction)
+    case "f2":
+        updateActionStats(&stats.f2, actionDrop, r.ExecReport.SchedAction)
+    case "f3":
+        updateActionStats(&stats.f3, actionDrop, r.ExecReport.SchedAction)
+    case "f4":
+        updateActionStats(&stats.f4, actionDrop, r.ExecReport.SchedAction)
+    default:
+        updateActionStats(&stats.f5, actionDrop, r.ExecReport.SchedAction)
     }
 
 	// 'dropped' cause those are stats for completions
@@ -309,6 +348,49 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 		}
     }
 
+	switch r.Fun.Name {
+    case "f1":
+		if dropped {
+			stats.UPf1[2]++
+		} else if outOfTime {
+			stats.UPf1[1]++
+		} else {
+			stats.UPf1[0]++
+		}
+    case "f2":
+		if dropped {
+			stats.UPf2[2]++
+		} else if outOfTime {
+			stats.UPf2[1]++
+		} else {
+			stats.UPf2[0]++
+		}
+    case "f3":
+		if dropped {
+			stats.UPf3[2]++
+		} else if outOfTime {
+			stats.UPf3[1]++
+		} else {
+			stats.UPf3[0]++
+		}
+    case "f4":
+		if dropped {
+			stats.UPf4[2]++
+		} else if outOfTime {
+			stats.UPf4[1]++
+		} else {
+			stats.UPf4[0]++
+		}
+    default:
+		if dropped {
+			stats.UPf5[2]++
+		} else if outOfTime {
+			stats.UPf5[1]++
+		} else {
+			stats.UPf5[0]++
+		}
+    }
+
     // add stats to InfluxDB every 'updateEvery'
     if elapsedTimeInSeconds - float64(updateEvery*updateRound) > float64(updateEvery) {
     	if elapsedTimeInSeconds-float64(updateEvery*updateRound) > float64(updateEvery) {
@@ -320,7 +402,7 @@ func (mg *metricGrabberDQN) addStats(r *scheduledRequest, actionDrop bool, offlo
 }
 
 
-func updateClassStats(slice *[]int, dropped bool, schedAction string) {
+func updateActionStats(slice *[]int, dropped bool, schedAction string) {
     index := 3
     if !dropped {
         switch schedAction {
@@ -352,6 +434,11 @@ func (mg *metricGrabberDQN) WriteJSON() {
         "Critical1":           	stats.Critical1,
         "Critical2":           	stats.Critical2,
         "Batch":               	stats.Batch,
+        "f1":                	stats.f1,
+        "f2":            		stats.f2,
+        "f3":           		stats.f3,
+        "f4":           		stats.f4,
+        "f5":               	stats.f5,
         "ResponseTime":        	stats.ResponseTime,
         "IsWarmStart":         	stats.IsWarmStart,
         "InitTime":            	stats.InitTime,
@@ -364,7 +451,12 @@ func (mg *metricGrabberDQN) WriteJSON() {
         "UPStandard":           stats.UPStandard,
         "UPCritical1":          stats.UPCritical1,
         "UPCritical2": 			stats.UPCritical2,
-        "UPBatch":  			stats.UPBatch,
+        "UPBatch":				stats.UPBatch,
+        "UPf1":					stats.f1,
+        "UPf2":					stats.f2,
+        "UPf3":					stats.f3,
+        "UPf4":					stats.f4,
+        "UPf5":					stats.f5,
     }
 
     for name, part := range parts {
