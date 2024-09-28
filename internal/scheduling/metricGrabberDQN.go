@@ -452,11 +452,11 @@ func (mg *metricGrabberDQN) WriteJSON() {
         "UPCritical1":          stats.UPCritical1,
         "UPCritical2": 			stats.UPCritical2,
         "UPBatch":				stats.UPBatch,
-        "UPf1":					stats.f1,
-        "UPf2":					stats.f2,
-        "UPf3":					stats.f3,
-        "UPf4":					stats.f4,
-        "UPf5":					stats.f5,
+        "UPf1":					stats.UPf1,
+        "UPf2":					stats.UPf2,
+        "UPf3":					stats.UPf3,
+        "UPf4":					stats.UPf4,
+        "UPf5":					stats.UPf5,
     }
 
     for name, part := range parts {
