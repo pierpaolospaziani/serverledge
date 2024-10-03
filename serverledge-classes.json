@@ -2,6 +2,8 @@
   {
     "name": "critical-1",
     "utility": 1.0,
+    "deadlinePenalty": 0.25,
+    "dropPenalty": 0.75,
     "maximumResponseTime": 0.5,
     "completedPercentage": 0.9
   },
@@ -9,13 +11,14 @@
     "name": "critical-2",
     "utility": 1.0,
     "deadlinePenalty": 0.75,
-    "dropPenalty": 0.75,
+    "dropPenalty": 0.25,
     "maximumResponseTime": 0.5,
     "completedPercentage": 0
   },
   {
     "name": "batch",
     "utility": 1.0,
+    "dropPenalty": 1.0,
     "maximumResponseTime": 10000.0,
     "completedPercentage": 0.9
   }
